@@ -39,7 +39,7 @@ Start the servers by running these commands, **each in a separate terminal**:
     kafka-server-start.sh $KAFKA_HOME/config/server.properties
 
 
-# Couchbase Sink Connector
+# CouchDB Sink Connector
 Now let's talk about the sink connector, which reads messages from one or more Kafka topics and writes them 
 to CouchDB.
 
