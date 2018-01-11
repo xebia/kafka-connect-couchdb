@@ -14,14 +14,26 @@
  * limitations under the License.
  */
 
-package com.xebia.kafka.connect.couchdb;
+package com.xebia.kafka.connect.couchdb.merging;
 
-class VersionUtil {
-  static String getVersion() {
-    try {
-      return VersionUtil.class.getPackage().getImplementationVersion();
-    } catch (Exception ex) {
-      return "0.1.0";
-    }
+import io.vertx.core.json.JsonObject;
+
+import java.util.List;
+
+public class MergeResult {
+  private JsonObject winner;
+  private List<JsonObject> losers;
+
+  public MergeResult(JsonObject winner, List<JsonObject> losers) {
+    this.winner = winner;
+    this.losers = losers;
+  }
+
+  public JsonObject getWinner() {
+    return winner;
+  }
+
+  public List<JsonObject> getLosers() {
+    return losers;
   }
 }

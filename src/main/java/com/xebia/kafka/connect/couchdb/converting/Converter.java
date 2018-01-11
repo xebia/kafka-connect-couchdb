@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.xebia.kafka.connect.couchdb;
+package com.xebia.kafka.connect.couchdb.converting;
 
-class VersionUtil {
-  static String getVersion() {
-    try {
-      return VersionUtil.class.getPackage().getImplementationVersion();
-    } catch (Exception ex) {
-      return "0.1.0";
-    }
-  }
+import io.vertx.core.json.JsonObject;
+import org.apache.kafka.connect.data.SchemaAndValue;
+import org.apache.kafka.connect.sink.SinkRecord;
+
+public interface Converter {
+  JsonObject fromRecord(SinkRecord record);
+
+  SchemaAndValue toRecordSchemaAndValue(String topic, JsonObject doc);
 }
