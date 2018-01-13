@@ -69,12 +69,6 @@ class CouchDBConnectorConfig extends AbstractConfig {
       "CouchDB database. The database will need to be present in CouchDB. The key/value pairs should " +
       "follow the following syntax: {topic}/{database}";
 
-  private static final String PARSER_CONFIG = "parser";
-  private static final String PARSER_DISPLAY = "The parser class to use";
-  private static final String PARSER_DOC =
-    "A class implementing com.xebia.kafka.connect.couchdb.parsing.Parser. " +
-      "This will be used to parse from a Kafka record to JSON and vice versa.";
-
   private static final String MERGER_CONFIG = "merger";
   private static final String MERGER_DISPLAY = "The merger class to use";
   private static final String MERGER_DOC =
@@ -143,14 +137,6 @@ class CouchDBConnectorConfig extends AbstractConfig {
         CONNECTOR_GROUP, 1,
         ConfigDef.Width.LONG,
         TOPICS_TO_DATABASES_MAPPING_DISPLAY)
-
-      .define(PARSER_CONFIG,
-        ConfigDef.Type.STRING,
-        ConfigDef.Importance.HIGH,
-        PARSER_DOC,
-        CONNECTOR_GROUP, 2,
-        ConfigDef.Width.LONG,
-        PARSER_DISPLAY)
 
       .define(MERGER_CONFIG,
         ConfigDef.Type.STRING,
@@ -251,12 +237,12 @@ class CouchDBConnectorConfig extends AbstractConfig {
       .encodeToString(auth.getBytes());
   }
 
-  Converter getConverter() {
-    String converterClassName = getString("converter");
+  @SuppressWarnings("unchecked")
+  private <T> T getInstance(String className, Class<T> clazz) {
     try {
-      Class<?> converterClass = getClass().getClassLoader().loadClass(converterClassName);
-      Constructor<?> convertConst = converterClass.getConstructor();
-      return (Converter) convertConst.newInstance();
+      Class<?> loadedClass = getClass().getClassLoader().loadClass(className);
+      Constructor<?> classConstructor = loadedClass.getConstructor();
+      return (T) classConstructor.newInstance();
     } catch (
       ClassNotFoundException |
         NoSuchMethodException |
@@ -264,30 +250,18 @@ class CouchDBConnectorConfig extends AbstractConfig {
         InvocationTargetException |
         InstantiationException e) {
       throw new ConfigException(
-        "Could not create an instance of converter, " +
-          "does '" + converterClassName + "' exist and extend 'com.xebia.kafka.connect.couchdb.Converter'?",
+        "Could not create an instance of " + clazz.getName()+ ", " +
+          "does '" + className + "' exist and extend 'com.xebia.kafka.connect.couchdb.Converter'?",
         e
       );
     }
   }
 
+  Converter getConverter() {
+    return getInstance(getString("converter"), Converter.class);
+  }
+
   Merger getMerger() {
-    String mergerClassName = getString("merger");
-    try {
-      Class<?> mergerClass = getClass().getClassLoader().loadClass(mergerClassName);
-      Constructor<?> mergerConst = mergerClass.getConstructor();
-      return (Merger) mergerConst.newInstance();
-    } catch (
-      ClassNotFoundException |
-        NoSuchMethodException |
-        IllegalAccessException |
-        InvocationTargetException |
-        InstantiationException e) {
-      throw new ConfigException(
-        "Could not create an instance of merger, " +
-          "does '" + mergerClassName + "' exist and extend 'com.xebia.kafka.connect.couchdb.Merger'?",
-        e
-      );
-    }
+    return getInstance(getString("merger"), Merger.class);
   }
 }
