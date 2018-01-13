@@ -50,6 +50,29 @@ class CouchDBConnectorConfig extends AbstractConfig {
   private static final String COUCHDB_PORT_DOC = "The port where CouchDB is reachable on.";
   private static final int COUCHDB_PORT_DEFAULT = 5984;
 
+  private static final String COUCHDB_SSL_CONFIG = "ssl";
+  private static final String COUCHDB_SSL_DISPLAY = "Connect to CouchDB over SSL";
+  private static final String COUCHDB_SSL_DOC =
+    "Whether or not to connect to CouchDB over SSL. " +
+      "If your CouchDB instance is connected to an open network this should be set to true!" +
+      "If true, you'll need to provide a SSL trust store using the 'ssl-truststore-path' " +
+      "and 'ssl-truststore-password' configuration items.";
+  private static final boolean COUCHDB_SSL_DEFAULT = false;
+  
+  private static final String SSL_TRUSTSTORE_PATH_CONFIG = "ssl-truststore-path";
+  private static final String SSL_TRUSTSTORE_PATH_DISPLAY = "Path to the trust store file to use.";
+  private static final String SSL_TRUSTSTORE_PATH_DOC =
+    "The trust store should be a file reachable by the application. It should be loaded with the SSL " +
+      "certificate in use by CouchDB to encrypt traffic over HTTPS connections.";
+  private static final String SSL_TRUSTSTORE_PATH_DEFAULT = "";
+
+  private static final String SSL_TRUSTSTORE_PASSWORD_CONFIG = "ssl-truststore-password";
+  private static final String SSL_TRUSTSTORE_PASSWORD_DISPLAY = "Password for the trust store file to use";
+  private static final String SSL_TRUSTSTORE_PASSWORD_DOC =
+    "If the trust store provided in 'ssl-truststore-path' is password protected, " +
+      "you'll need to provide that password here.";
+  private static final String SSL_TRUSTSTORE_PASSWORD_DEFAULT = "";
+
   private static final String COUCHDB_USERNAME_CONFIG = "username";
   private static final String COUCHDB_USERNAME_DISPLAY = "CouchDB username";
   private static final String COUCHDB_USERNAME_DOC =
@@ -69,11 +92,19 @@ class CouchDBConnectorConfig extends AbstractConfig {
       "CouchDB database. The database will need to be present in CouchDB. The key/value pairs should " +
       "follow the following syntax: {topic}/{database}";
 
+  private static final String CONVERTER_CONFIG = "converter";
+  private static final String CONVERTER_DISPLAY = "The converter class to use";
+  private static final String CONVERTER_DOC =
+    "A class implementing com.xebia.kafka.connect.couchdb.parsing.Converter. " +
+      "This will be used to parse from a Kafka record to JSON and vice versa.";
+  private static final String CONVERTER_DEFAULT = "com.xebia.kafka.connect.couchdb.converting.JSONConverter";
+
   private static final String MERGER_CONFIG = "merger";
   private static final String MERGER_DISPLAY = "The merger class to use";
   private static final String MERGER_DOC =
     "A class implementing com.xebia.kafka.connect.couchdb.merging.Merger. " +
       "This will be used when conflicting documents have been detected to decide a winning revision.";
+  private static final String MERGER_DEFAULT = "com.xebia.kafka.connect.couchdb.merging.LatestWinsMerger";
 
   static final String MAX_CONFLICTING_DOCS_FETCH_RETRIES_CONFIG =
     "max-conflicting-docs-fetch-retries";
@@ -83,6 +114,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
     "How many times the connector should retry when the conflicts retrieval process fails. " +
       "A certain amount of retries can be expected when multiple processes are resolving conflicts in " +
       "parallel";
+  private static final int MAX_CONFLICTING_DOCS_FETCH_RETRIES_DEFAULT = 5;
 
   static final String SOURCE_MAX_BATCH_SIZE_CONFIG = "max-source-batch-size";
   private static final String SOURCE_MAX_BATCH_SIZE_DISPLAY = "Maximum source batch size";
@@ -92,6 +124,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
       "When the queue contains multiple items they will be fetched until the size in this setting is reached " +
       "or the queue is depleted. " +
       "As such creating a batch mechanism to empty the queue.";
+  private static final int SOURCE_MAX_BATCH_SIZE_DEFAULT = 12;
 
   private static ConfigDef baseConfigDef() {
     return new ConfigDef()
@@ -112,12 +145,39 @@ class CouchDBConnectorConfig extends AbstractConfig {
         ConfigDef.Width.SHORT,
         COUCHDB_PORT_DISPLAY)
 
+      .define(COUCHDB_SSL_CONFIG,
+        ConfigDef.Type.BOOLEAN,
+        COUCHDB_SSL_DEFAULT,
+        ConfigDef.Importance.HIGH,
+        COUCHDB_SSL_DOC,
+        DATABASE_GROUP, 3,
+        ConfigDef.Width.SHORT,
+        COUCHDB_SSL_DISPLAY)
+
+      .define(SSL_TRUSTSTORE_PATH_CONFIG,
+        ConfigDef.Type.STRING,
+        SSL_TRUSTSTORE_PATH_DEFAULT,
+        ConfigDef.Importance.HIGH,
+        SSL_TRUSTSTORE_PATH_DOC,
+        DATABASE_GROUP, 4,
+        ConfigDef.Width.SHORT,
+        SSL_TRUSTSTORE_PATH_DISPLAY)
+
+      .define(SSL_TRUSTSTORE_PASSWORD_CONFIG,
+        ConfigDef.Type.STRING,
+        SSL_TRUSTSTORE_PASSWORD_DEFAULT,
+        ConfigDef.Importance.HIGH,
+        SSL_TRUSTSTORE_PASSWORD_DOC,
+        DATABASE_GROUP, 5,
+        ConfigDef.Width.SHORT,
+        SSL_TRUSTSTORE_PASSWORD_DISPLAY)
+
       .define(COUCHDB_USERNAME_CONFIG,
         ConfigDef.Type.STRING,
         COUCHDB_USERNAME_DEFAULT,
         ConfigDef.Importance.HIGH,
         COUCHDB_USERNAME_DOC,
-        DATABASE_GROUP, 3,
+        DATABASE_GROUP, 6,
         ConfigDef.Width.SHORT,
         COUCHDB_USERNAME_DISPLAY)
 
@@ -126,7 +186,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
         COUCHDB_PASSWORD_DEFAULT,
         ConfigDef.Importance.HIGH,
         COUCHDB_PASSWORD_DOC,
-        DATABASE_GROUP, 4,
+        DATABASE_GROUP, 7,
         ConfigDef.Width.SHORT,
         COUCHDB_PASSWORD_DISPLAY)
 
@@ -138,8 +198,18 @@ class CouchDBConnectorConfig extends AbstractConfig {
         ConfigDef.Width.LONG,
         TOPICS_TO_DATABASES_MAPPING_DISPLAY)
 
+      .define(CONVERTER_CONFIG,
+        ConfigDef.Type.STRING,
+        CONVERTER_DEFAULT,
+        ConfigDef.Importance.HIGH,
+        CONVERTER_DOC,
+        CONNECTOR_GROUP, 2,
+        ConfigDef.Width.LONG,
+        CONVERTER_DISPLAY)
+
       .define(MERGER_CONFIG,
         ConfigDef.Type.STRING,
+        MERGER_DEFAULT,
         ConfigDef.Importance.HIGH,
         MERGER_DOC,
         CONNECTOR_GROUP, 3,
@@ -148,6 +218,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
 
       .define(MAX_CONFLICTING_DOCS_FETCH_RETRIES_CONFIG,
         ConfigDef.Type.INT,
+        MAX_CONFLICTING_DOCS_FETCH_RETRIES_DEFAULT,
         ConfigDef.Importance.MEDIUM,
         MAX_CONFLICTING_DOCS_FETCH_RETRIES_DOC,
         CONNECTOR_GROUP, 4,
@@ -156,6 +227,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
 
       .define(SOURCE_MAX_BATCH_SIZE_CONFIG,
         ConfigDef.Type.INT,
+        SOURCE_MAX_BATCH_SIZE_DEFAULT,
         ConfigDef.Importance.MEDIUM,
         SOURCE_MAX_BATCH_SIZE_DOC,
         CONNECTOR_GROUP, 5,
@@ -188,21 +260,22 @@ class CouchDBConnectorConfig extends AbstractConfig {
     return taskConfigs;
   }
 
-  private Map<String, String> getMapping(String configKey) {
-    String mappingString = getString(configKey);
+  Map<String, String> getMapping(String mappingString) {
     String[] keyValuePairs = mappingString.split(",");
 
     Map<String, String> mapping = new HashMap<>();
     for (String keyValuePair : keyValuePairs) {
       String[] keyValue = keyValuePair.split("/");
-      mapping.put(keyValue[0], keyValue[1]);
+      if (keyValue.length == 2) {
+        mapping.put(keyValue[0], keyValue[1]);
+      }
     }
 
     return mapping;
   }
 
   Map<String, String> getTopicsToDatabasesMapping() {
-    return getMapping(TOPICS_TO_DATABASES_MAPPING_CONFIG);
+    return getMapping(getString(TOPICS_TO_DATABASES_MAPPING_CONFIG));
   }
 
   HttpClientOptions getHttpClientOptions() {
@@ -250,8 +323,8 @@ class CouchDBConnectorConfig extends AbstractConfig {
         InvocationTargetException |
         InstantiationException e) {
       throw new ConfigException(
-        "Could not create an instance of " + clazz.getName()+ ", " +
-          "does '" + className + "' exist and extend 'com.xebia.kafka.connect.couchdb.Converter'?",
+        "Could not create an instance of " + clazz.getSimpleName() + ", " +
+          "does '" + className + "' exist and extend '" + clazz.getCanonicalName() + "'?",
         e
       );
     }
