@@ -19,13 +19,15 @@ package com.xebia.kafka.connect.couchdb;
 import com.xebia.kafka.connect.couchdb.merging.LatestWinsMerger;
 import io.vertx.core.http.HttpClientOptions;
 import org.apache.kafka.connect.json.JsonConverter;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class CouchDBConnectorConfigTest {
   private CouchDBConnectorConfig config = TestUtils.createConfig();
@@ -37,12 +39,12 @@ public class CouchDBConnectorConfigTest {
     List<Map<String, String>> taskConfigs = config.getTaskConfigs(maxTasks);
 
     assertEquals(
-      "produced task configs have same size as max tasks",
-      taskConfigs.size(), maxTasks
+      taskConfigs.size(), maxTasks,
+      "produced task configs have same size as max tasks"
     );
     assertTrue(
-      "produced task configs all contain given config entries",
-      taskConfigs.stream().allMatch(map -> map.get("host").equals("127.0.0.1"))
+      taskConfigs.stream().allMatch(map -> map.get("host").equals("127.0.0.1")),
+      "produced task configs all contain given config entries"
     );
   }
 
@@ -51,23 +53,23 @@ public class CouchDBConnectorConfigTest {
     Map<String, String> mapping = config.getMapping("foo/bar,bar/baz");
 
     assertEquals(
-      "2 map entries should have been created",
-      mapping.size(), 2
+      mapping.size(), 2,
+      "2 map entries should have been created"
+      );
+    assertEquals(
+      mapping.get("foo"), "bar",
+      "have correct value for first entry"
     );
     assertEquals(
-      "have correct value for first entry",
-      mapping.get("foo"), "bar"
-    );
-    assertEquals(
-      "have correct value for second entry",
-      mapping.get("bar"), "baz"
+      mapping.get("bar"), "baz",
+      "have correct value for second entry"
     );
 
     mapping = config.getMapping("not a mapping at all");
 
     assertEquals(
-      "no map entries should have been created for invalid mapping string",
-      mapping.size(), 0
+      mapping.size(), 0,
+      "no map entries should have been created for invalid mapping string"
     );
   }
 
@@ -76,12 +78,12 @@ public class CouchDBConnectorConfigTest {
     Map<String, String> mapping = config.getTopicsToDatabasesMapping();
 
     assertEquals(
-      "1 map entry should have been created",
-      mapping.size(), 1
+      mapping.size(), 1,
+      "1 map entry should have been created"
     );
     assertEquals(
-      "have correct value for first entry",
-      mapping.get("couchdb-example"), "couchdb-example"
+      mapping.get("couchdb-example"), "couchdb-example",
+      "have correct value for first entry"
     );
   }
 
@@ -90,16 +92,16 @@ public class CouchDBConnectorConfigTest {
     HttpClientOptions httpClientOptions = config.getHttpClientOptions();
 
     assertEquals(
-      "should use the provided host value as default host",
-      httpClientOptions.getDefaultHost(), "127.0.0.1"
+      httpClientOptions.getDefaultHost(), "127.0.0.1",
+      "should use the provided host value as default host"
     );
     assertEquals(
-      "should use the provided port value as default port",
-      httpClientOptions.getDefaultPort(), 5984
+      httpClientOptions.getDefaultPort(), 5984,
+      "should use the provided port value as default port"
     );
     assertFalse(
-      "should not activate ssl when option set to false",
-      httpClientOptions.isSsl()
+      httpClientOptions.isSsl(),
+      "should not activate ssl when option set to false"
     );
 
     CouchDBConnectorConfig config = TestUtils.createConfig(
@@ -111,16 +113,16 @@ public class CouchDBConnectorConfigTest {
     httpClientOptions = config.getHttpClientOptions();
 
     assertTrue(
-      "should activate ssl when option set to true",
-      httpClientOptions.isSsl()
+      httpClientOptions.isSsl(),
+      "should activate ssl when option set to true"
     );
     assertEquals(
-      "should use the provided trust store path",
-      httpClientOptions.getTrustStoreOptions().getPath(), "foo.bar.baz"
+      httpClientOptions.getTrustStoreOptions().getPath(), "foo.bar.baz",
+      "should use the provided trust store path"
     );
     assertEquals(
-      "should use the provided trust store password",
-      httpClientOptions.getTrustStoreOptions().getPassword(), "MySuperSecretPassword"
+      httpClientOptions.getTrustStoreOptions().getPassword(), "MySuperSecretPassword",
+      "should use the provided trust store password"
     );
   }
 
@@ -128,8 +130,9 @@ public class CouchDBConnectorConfigTest {
   public void getBasicAuthTest() {
     String auth = config.getBasicAuth();
 
-    assertEquals("when no user/pass is given auth should not contain them",
-      auth, "Basic "
+    assertEquals(
+      auth, "Basic ",
+      "when no user/pass is given auth should not contain them"
     );
 
     CouchDBConnectorConfig config = TestUtils.createConfig(
@@ -140,24 +143,25 @@ public class CouchDBConnectorConfigTest {
     auth = config.getBasicAuth();
     String encoded = Base64.getEncoder().encodeToString("foo:bar".getBytes());
 
-    assertEquals("when user/pass are given auth should contain them Base64 encoded",
-      auth, "Basic " + encoded
+    assertEquals(
+      auth, "Basic " + encoded,
+      "when user/pass are given auth should contain them Base64 encoded"
     );
   }
 
   @Test
   public void getConverterTest() {
     assertTrue(
-      "a JsonConverter instance should be created",
-      config.getConverter() instanceof JsonConverter
+      config.getConverter() instanceof JsonConverter,
+      "a JsonConverter instance should be created"
     );
   }
 
   @Test
   public void getMergerTest() {
     assertTrue(
-      "a LatestWinsMerger instance should be created",
-      config.getMerger() instanceof LatestWinsMerger
+      config.getMerger() instanceof LatestWinsMerger,
+      "a LatestWinsMerger instance should be created"
     );
   }
 }
