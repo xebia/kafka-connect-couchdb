@@ -18,13 +18,16 @@ package com.xebia.kafka.connect.couchdb.merging;
 
 import io.vertx.core.json.JsonObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public interface Merger {
   static List<JsonObject> process(MergeResult mergeResult) {
-    List<JsonObject> allDocs = mergeResult.getLosers();
+    List<JsonObject> allDocs = new ArrayList<>();
     // Set all losing documents to deleted
-    allDocs.forEach(l -> l.put("_deleted", true));
+    mergeResult.getLosers().forEach(l -> l.put("_deleted", true));
+    // Add losing documents to allDocs collection
+    allDocs.addAll(mergeResult.getLosers());
     // Add the winner to the collection
     allDocs.add(mergeResult.getWinner());
     // Return all deleted documents and winning document in one collection
