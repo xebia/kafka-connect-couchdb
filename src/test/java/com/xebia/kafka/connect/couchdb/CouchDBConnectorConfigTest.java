@@ -16,9 +16,9 @@
 
 package com.xebia.kafka.connect.couchdb;
 
-import com.xebia.kafka.connect.couchdb.converting.JSONConverter;
 import com.xebia.kafka.connect.couchdb.merging.LatestWinsMerger;
 import io.vertx.core.http.HttpClientOptions;
+import org.apache.kafka.connect.json.JsonConverter;
 import org.junit.Test;
 
 import java.util.Base64;
@@ -148,8 +148,8 @@ public class CouchDBConnectorConfigTest {
   @Test
   public void getConverterTest() {
     assertTrue(
-      "a JSONConverter instance should be created",
-      config.getConverter() instanceof JSONConverter
+      "a JsonConverter instance should be created",
+      config.getConverter() instanceof JsonConverter
     );
   }
 

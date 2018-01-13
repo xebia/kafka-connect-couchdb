@@ -16,7 +16,8 @@
 
 package com.xebia.kafka.connect.couchdb;
 
-import com.xebia.kafka.connect.couchdb.converting.Converter;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava.core.Vertx;
 import io.vertx.rxjava.core.http.HttpClient;
@@ -24,6 +25,7 @@ import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaAndValue;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
+import org.apache.kafka.connect.storage.Converter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +60,15 @@ public class CouchDBSourceTask extends SourceTask {
     Schema keySchema = Schema.STRING_SCHEMA;
     String key = doc.getString("_id");
 
-    SchemaAndValue schemaAndValue = converter.toRecordSchemaAndValue(topic, doc);
+    byte[] docBytes;
+    try {
+      docBytes = Json.mapper.writeValueAsBytes(doc);
+    } catch (JsonProcessingException e) {
+      LOG.error("Could not get bytes from JSON value {} from database {}", doc.encodePrettily(), dbName);
+      throw new RuntimeException("Could not get bytes from JSON value");
+    }
+
+    SchemaAndValue schemaAndValue = converter.toConnectData(topic, docBytes);
 
     return new SourceRecord(
       partition,

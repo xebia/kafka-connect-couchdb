@@ -16,13 +16,13 @@
 
 package com.xebia.kafka.connect.couchdb;
 
-import com.xebia.kafka.connect.couchdb.converting.Converter;
 import com.xebia.kafka.connect.couchdb.merging.Merger;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.net.JksOptions;
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigException;
+import org.apache.kafka.connect.storage.Converter;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -58,7 +58,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
       "If true, you'll need to provide a SSL trust store using the 'ssl-truststore-path' " +
       "and 'ssl-truststore-password' configuration items.";
   private static final boolean COUCHDB_SSL_DEFAULT = false;
-  
+
   private static final String SSL_TRUSTSTORE_PATH_CONFIG = "ssl-truststore-path";
   private static final String SSL_TRUSTSTORE_PATH_DISPLAY = "Path to the trust store file to use.";
   private static final String SSL_TRUSTSTORE_PATH_DOC =

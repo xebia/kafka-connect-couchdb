@@ -16,7 +16,6 @@
 
 package com.xebia.kafka.connect.couchdb;
 
-import com.xebia.kafka.connect.couchdb.converting.Converter;
 import com.xebia.kafka.connect.couchdb.merging.Merger;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
@@ -31,10 +30,12 @@ import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.connect.errors.DataException;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
+import org.apache.kafka.connect.storage.Converter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Observable;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -203,10 +204,13 @@ public class CouchDBSinkTask extends SinkTask {
 
         JsonObject newDoc;
         try {
-          newDoc = converter.fromRecord(record);
-        } catch (DataException e) {
-          LOG.error("Could not fromRecord record to JSON on topic {}", topic);
-          throw e;
+          byte[] newDocBytes = converter.fromConnectData(
+            record.topic(), record.valueSchema(), record.value()
+          );
+          newDoc = Json.mapper.readValue(newDocBytes, JsonObject.class);
+        } catch (DataException | IOException e) {
+          LOG.error("Could not convert record to JSON on topic {}", topic);
+          throw new RuntimeException("Could not convert record to JSON", e);
         }
 
         String id = newDoc.getString("_id");
