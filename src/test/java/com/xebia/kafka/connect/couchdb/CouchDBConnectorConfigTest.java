@@ -19,15 +19,13 @@ package com.xebia.kafka.connect.couchdb;
 import com.xebia.kafka.connect.couchdb.merging.LatestWinsMerger;
 import io.vertx.core.http.HttpClientOptions;
 import org.apache.kafka.connect.json.JsonConverter;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class CouchDBConnectorConfigTest {
   private CouchDBConnectorConfig config = TestUtils.createConfig();
@@ -39,7 +37,7 @@ public class CouchDBConnectorConfigTest {
     List<Map<String, String>> taskConfigs = config.getTaskConfigs(maxTasks);
 
     assertEquals(
-      taskConfigs.size(), maxTasks,
+      maxTasks, taskConfigs.size(),
       "produced task configs have same size as max tasks"
     );
     assertTrue(
@@ -53,15 +51,15 @@ public class CouchDBConnectorConfigTest {
     Map<String, String> mapping = config.getMapping("foo/bar,bar/baz");
 
     assertEquals(
-      mapping.size(), 2,
+      2, mapping.size(),
       "2 map entries should have been created"
-      );
+    );
     assertEquals(
-      mapping.get("foo"), "bar",
+      "bar", mapping.get("foo"),
       "have correct value for first entry"
     );
     assertEquals(
-      mapping.get("bar"), "baz",
+      "baz", mapping.get("bar"),
       "have correct value for second entry"
     );
 
@@ -78,7 +76,7 @@ public class CouchDBConnectorConfigTest {
     Map<String, String> mapping = config.getTopicsToDatabasesMapping();
 
     assertEquals(
-      mapping.size(), 1,
+      1, mapping.size(),
       "1 map entry should have been created"
     );
     assertEquals(
@@ -92,11 +90,11 @@ public class CouchDBConnectorConfigTest {
     HttpClientOptions httpClientOptions = config.getHttpClientOptions();
 
     assertEquals(
-      httpClientOptions.getDefaultHost(), "127.0.0.1",
+      "127.0.0.1", httpClientOptions.getDefaultHost(),
       "should use the provided host value as default host"
     );
     assertEquals(
-      httpClientOptions.getDefaultPort(), 5984,
+      5984, httpClientOptions.getDefaultPort(),
       "should use the provided port value as default port"
     );
     assertFalse(
@@ -117,11 +115,11 @@ public class CouchDBConnectorConfigTest {
       "should activate ssl when option set to true"
     );
     assertEquals(
-      httpClientOptions.getTrustStoreOptions().getPath(), "foo.bar.baz",
+      "foo.bar.baz", httpClientOptions.getTrustStoreOptions().getPath(),
       "should use the provided trust store path"
     );
     assertEquals(
-      httpClientOptions.getTrustStoreOptions().getPassword(), "MySuperSecretPassword",
+      "MySuperSecretPassword", httpClientOptions.getTrustStoreOptions().getPassword(),
       "should use the provided trust store password"
     );
   }
@@ -131,7 +129,7 @@ public class CouchDBConnectorConfigTest {
     String auth = config.getBasicAuth();
 
     assertEquals(
-      auth, "Basic ",
+      "Basic ", auth,
       "when no user/pass is given auth should not contain them"
     );
 
@@ -144,7 +142,7 @@ public class CouchDBConnectorConfigTest {
     String encoded = Base64.getEncoder().encodeToString("foo:bar".getBytes());
 
     assertEquals(
-      auth, "Basic " + encoded,
+      "Basic " + encoded, auth,
       "when user/pass are given auth should contain them Base64 encoded"
     );
   }

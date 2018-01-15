@@ -16,6 +16,9 @@
 
 package com.xebia.kafka.connect.couchdb;
 
+import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonObject;
+
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -23,7 +26,24 @@ import java.util.Map;
 import java.util.Properties;
 
 public class TestUtils {
-  public static CouchDBConnectorConfig createConfig(String ...configEntries) {
+  public static JsonObject newDoc = Json.mapper.convertValue(
+    "{\"_id\":\"1\",\"foo\":\"bar\"}",
+    JsonObject.class
+  );
+  public static JsonObject latestRev = Json.mapper.convertValue(
+    "{\"_id\":\"1\",\"_rev\":\"3\",\"bar\":\"baz\"}",
+    JsonObject.class
+  );
+  public static JsonObject conflict1 = Json.mapper.convertValue(
+    "{\"_id\":\"1\",\"_rev\":\"2\",\"baz\":\"foo\"}",
+    JsonObject.class
+  );
+  public static JsonObject conflict2 = Json.mapper.convertValue(
+    "{\"_id\":\"1\",\"_rev\":\"1\",\"bar\":\"foo\"}",
+    JsonObject.class
+  );
+
+  public static Map<String, String> createConfigMap(String ...configEntries) {
     Properties props = new Properties();
     try {
       props.load(TestUtils.class.getClassLoader().getResourceAsStream("couchdb-sink.properties"));
@@ -44,6 +64,10 @@ public class TestUtils {
       configMap.put(keyValue[0], keyValue[1]);
     }
 
-    return new CouchDBConnectorConfig(configMap);
+    return configMap;
+  }
+
+  public static CouchDBConnectorConfig createConfig(String ...configEntries) {
+    return new CouchDBConnectorConfig(createConfigMap(configEntries));
   }
 }

@@ -16,27 +16,19 @@
 
 package com.xebia.kafka.connect.couchdb.merging;
 
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
+import static com.xebia.kafka.connect.couchdb.TestUtils.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class MergerTest {
   @Test
   public void processTest() {
-    MergeResult mr = new MergeResult(
-      Json.mapper.convertValue("{\"foo\":\"bar\"}", JsonObject.class),
-      Arrays.asList(
-        Json.mapper.convertValue("{\"bar\":\"baz\"}", JsonObject.class),
-        Json.mapper.convertValue("{\"baz\":\"foo\"}", JsonObject.class),
-        Json.mapper.convertValue("{\"bar\":\"foo\"}", JsonObject.class)
-      )
-    );
-
+    MergeResult mr = new MergeResult(newDoc, Arrays.asList(latestRev, conflict1, conflict2));
     List<JsonObject> processed = Merger.process(mr);
 
     assertTrue(

@@ -16,12 +16,11 @@
 
 package com.xebia.kafka.connect.couchdb.merging;
 
-import io.vertx.core.json.Json;
-import io.vertx.core.json.JsonObject;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.util.Arrays;
 
+import static com.xebia.kafka.connect.couchdb.TestUtils.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class LatestWinsMergerTest {
@@ -29,19 +28,14 @@ public class LatestWinsMergerTest {
 
   @Test
   public void mergeTest() {
-    JsonObject newDoc = Json.mapper.convertValue("{\"foo\":\"bar\"}", JsonObject.class);
-    JsonObject latestRev = Json.mapper.convertValue("{\"bar\":\"baz\"}", JsonObject.class);
-    JsonObject conflict1 = Json.mapper.convertValue("{\"baz\":\"foo\"}", JsonObject.class);
-    JsonObject conflict2 = Json.mapper.convertValue("{\"bar\":\"foo\"}", JsonObject.class);
-
     MergeResult mr = lwm.merge(newDoc, latestRev, Arrays.asList(conflict1, conflict2));
 
     assertEquals(
-      mr.getWinner(), newDoc,
+      newDoc, mr.getWinner(),
       "winning doc should be newDoc"
     );
     assertEquals(
-      mr.getLosers(), Arrays.asList(latestRev, conflict1, conflict2),
+      Arrays.asList(latestRev, conflict1, conflict2), mr.getLosers(),
       "losing docs should be all others"
     );
   }
