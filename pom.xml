@@ -46,7 +46,8 @@
     <properties>
         <java-compat.version>1.8</java-compat.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kafka.version>0.10.0.0-cp1</kafka.version>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <kafka.version>0.10.2.1</kafka.version>
         <vertx.version>3.5.0</vertx.version>
         <junit.version>4.12</junit.version>
         <junit.jupiter.version>5.0.2</junit.jupiter.version>
@@ -171,6 +172,25 @@
                 </dependencies>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.19.1</version>
+                <executions>
+                    <execution>
+                        <id>integration-test</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>verify</id>
+                        <goals>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.5.3</version>
                 <configuration>
@@ -196,10 +216,4 @@
             </resource>
         </resources>
     </build>
-    <repositories>
-        <repository>
-            <id>confluent</id>
-            <url>http://packages.confluent.io/maven/</url>
-        </repository>
-    </repositories>
 </project>

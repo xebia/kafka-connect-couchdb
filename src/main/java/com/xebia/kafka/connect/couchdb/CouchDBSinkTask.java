@@ -38,6 +38,7 @@ import rx.Observable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -82,7 +83,7 @@ public class CouchDBSinkTask extends SinkTask {
         statusNotAccepted = false;
       }
     }
-    boolean statusNotOk = response.statusCode() >= 200 || response.statusCode() < 400;
+    boolean statusNotOk = response.statusCode() < 200 || response.statusCode() >= 400;
 
     if (statusNotOk && statusNotAccepted) {
       throw new RuntimeException(
@@ -144,6 +145,18 @@ public class CouchDBSinkTask extends SinkTask {
       .map(conflictingDocs -> new LatestRevAndConflictDocs(latestRevAndConflicts.latestRev, conflictingDocs));
   }
 
+  private JsonObject toBulkDocsBody(List<JsonObject> bulkDocs) {
+    JsonArray docs = new JsonArray();
+    for (JsonObject bd : bulkDocs) {
+      docs.add(bd);
+    }
+
+    JsonObject body = new JsonObject();
+    body.put("docs", docs);
+
+    return body;
+  }
+
   private Observable<HttpResponse<Buffer>> update(String dbName, String id, JsonObject newDoc) {
     return fetchLatestRevAndConflicts(dbName, id)
       .flatMap(lrac -> fetchLatestRevAndConflictingDocs(dbName, id, lrac))
@@ -153,7 +166,7 @@ public class CouchDBSinkTask extends SinkTask {
         return merger.merge(newDoc, lracd.latestRev, lracd.conflictDocs);
       })
       .map(Merger::process)
-      .map(Json::encode)
+      .map(this::toBulkDocsBody)
       .flatMap(body -> httpClient
         .post("/" + dbName + "/_bulk_docs")
         .rxSendJson(body)
@@ -181,6 +194,7 @@ public class CouchDBSinkTask extends SinkTask {
     auth = config.getBasicAuth();
     databasesMapping = config.getTopicsToDatabasesMapping();
     converter = config.getConverter();
+    converter.configure(Collections.singletonMap("schemas.enable", false), false);
     merger = config.getMerger();
     maxConflictingDocsFetchRetries = config.getInt(MAX_CONFLICTING_DOCS_FETCH_RETRIES_CONFIG);
 
@@ -191,7 +205,7 @@ public class CouchDBSinkTask extends SinkTask {
   public void put(Collection<SinkRecord> records) {
     Observable
       .from(records)
-      .map(record -> {
+      .flatMap(record -> {
         String topic = record.topic();
 
         String dbName;
@@ -199,7 +213,7 @@ public class CouchDBSinkTask extends SinkTask {
           dbName = databasesMapping.get(topic);
         } catch (NullPointerException e) {
           LOG.error("No database mapping found for topic {}", topic);
-          throw e;
+          return Observable.error(e);
         }
 
         JsonObject newDoc;
@@ -210,7 +224,7 @@ public class CouchDBSinkTask extends SinkTask {
           newDoc = Json.mapper.readValue(newDocBytes, JsonObject.class);
         } catch (DataException | IOException e) {
           LOG.error("Could not convert record to JSON on topic {}", topic);
-          throw new RuntimeException("Could not convert record to JSON", e);
+          return Observable.error(e);
         }
 
         String id = newDoc.getString("_id");
@@ -220,12 +234,14 @@ public class CouchDBSinkTask extends SinkTask {
             topic,
             newDoc.encodePrettily()
           );
-          throw new RuntimeException("No valid _id field present in conversion result JSON");
+          return Observable
+            .error(new RuntimeException("No valid _id field present in conversion result JSON"));
         }
 
         // We try to insert the document as if it was new first
         return insert(dbName, newDoc)
-          .map(result -> {
+          .map(response -> validateResponse(response, CONFLICT_STATUS_CODE))
+          .flatMap(result -> {
             // A conflict signals a version of this document exists in the database, so we update
             if (result.statusCode() == CONFLICT_STATUS_CODE) {
               return update(dbName, id, newDoc)
@@ -233,30 +249,12 @@ public class CouchDBSinkTask extends SinkTask {
                 .map(response -> record);
             }
 
-            // The insertion produced an error other than a conflict error, we cannot handle this document
-            else if (result.statusCode() < 200 || result.statusCode() >= 400) {
-              LOG.error(
-                "Received error response while trying to insert new document" +
-                  "\nTopic:    {}" +
-                  "\nDatabase: {}" +
-                  "\nDocument: {}" +
-                  "\nStatus:   {}" +
-                  "\nResponse: {}",
-                topic,
-                dbName,
-                newDoc.encodePrettily(),
-                result.statusMessage(),
-                result.bodyAsString()
-              );
-              throw new RuntimeException("Server error received while trying to insert new document");
-            }
-
             // The insertion succeeded, the document was newly created in the database
-            return record;
+            return Observable.just(record);
           });
       })
-      .doOnError(e -> LOG.error("Error occurred while handling record", e))
-      .toBlocking();
+      .toCompletable()
+      .await();
   }
 
   @Override
