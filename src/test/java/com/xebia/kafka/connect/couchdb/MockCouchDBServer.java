@@ -16,15 +16,15 @@
 
 package com.xebia.kafka.connect.couchdb;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import io.vertx.core.http.HttpServerOptions;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava.core.Vertx;
 import io.vertx.rxjava.core.http.HttpServer;
 import io.vertx.rxjava.core.http.HttpServerRequest;
+import io.vertx.rxjava.core.http.HttpServerResponse;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -68,6 +68,27 @@ class MockCouchDBServer {
           req.response().end(latestRev.copy().encode());
           break;
       }
+
+    } else if (req.path().contains("_changes")) {
+      JsonObject change = new JsonObject();
+      change.put("rev", latestRev.getString("_rev"));
+
+      JsonArray changes = new JsonArray();
+      changes.add(change);
+
+      JsonObject body = new JsonObject();
+      body.put("id", "1");
+      body.put("seq", "1");
+      body.put("changes", changes);
+      body.put("doc", latestRev);
+      String chunk = body.encode() + "\n";
+
+      String[] chunks = new String[20];
+      Arrays.fill(chunks, chunk);
+
+      HttpServerResponse res = req.response().setChunked(true);
+      Arrays.asList(chunks).forEach(res::write);
+      res.end();
     }
   }
 
