@@ -20,7 +20,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava.core.Vertx;
+import io.vertx.rxjava.core.buffer.Buffer;
 import io.vertx.rxjava.core.http.HttpClient;
+import io.vertx.rxjava.core.http.HttpClientRequest;
+import io.vertx.rxjava.core.http.HttpClientResponse;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaAndValue;
 import org.apache.kafka.connect.source.SourceRecord;
@@ -28,18 +31,48 @@ import org.apache.kafka.connect.source.SourceTask;
 import org.apache.kafka.connect.storage.Converter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rx.Emitter;
+import rx.Observable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import static com.xebia.kafka.connect.couchdb.CouchDBConnectorConfig.Constants.*;
+import static com.xebia.kafka.connect.couchdb.CouchDBConnectorConfig.Constants.AUTH_HEADER;
 import static com.xebia.kafka.connect.couchdb.CouchDBConnectorConfig.SOURCE_MAX_BATCH_SIZE_CONFIG;
 
 public class CouchDBSourceTask extends SourceTask {
+  private class Acc {
+    String str;
+    JsonObject obj;
+
+    Acc(String str, JsonObject obj) {
+      this.str = str;
+      this.obj = obj;
+    }
+
+    Acc(String str) {
+      this.str = str;
+    }
+
+    Acc() {
+      this.str = "";
+    }
+
+    boolean hasObject() {
+      return Objects.nonNull(obj);
+    }
+
+    JsonObject getObj() {
+      return obj;
+    }
+  }
+
   private static final Logger LOG = LoggerFactory.getLogger(CouchDBSourceTask.class);
 
   private String auth;
@@ -81,31 +114,54 @@ public class CouchDBSourceTask extends SourceTask {
     );
   }
 
-  private void initChangesFeeds() {
-    for (Map.Entry<String, String> entry : databasesMapping.entrySet()) {
-      String dbName = entry.getKey();
-      String topic = entry.getValue();
-
-      httpClient
-        .get("/" + dbName + "/_changes?feed=continuous&include_docs=true&since=now")
-        .putHeader(AUTH_HEADER, auth)
-        .handler(response -> response
-          .handler(event -> {
-            JsonObject change = event.toJsonObject();
-            String id = change.getString("id");
-
-            // We ignore design documents as they are not the kind of data we want to publish to Kafka
-            if (!id.startsWith("_design")) {
-              String seq = change.getString("id");
-              JsonObject doc = change.getJsonObject("latestRev");
-
-              records.offer(createRecord(dbName, seq, topic, doc));
-            }
-          })
-        )
-        .exceptionHandler(e -> LOG.error("Error while listening to changes for database {}", dbName, e))
-        .end();
+  private Acc accumulateJsonObjects(Acc acc, String chunk) {
+    String concat = acc.str + chunk;
+    String[] parts = concat.split("\n");
+    if (parts.length > 1 && !parts[0].isEmpty()) {
+      String obj = parts[0];
+      JsonObject jObj =  Json.mapper.convertValue(obj, JsonObject.class);
+      return new Acc(concat.replace(obj + "\n", ""), jObj);
+    } else {
+      return new Acc(concat);
     }
+  }
+
+  private Observable<HttpClientResponse> get(String requestURI) {
+    return Observable.create(subscriber -> {
+      HttpClientRequest req = httpClient
+        .get(requestURI)
+        .putHeader(AUTH_HEADER, auth);
+
+      Observable<HttpClientResponse> resp = req.toObservable();
+      resp.subscribe(subscriber);
+
+      req.end();
+
+    }, Emitter.BackpressureMode.BUFFER);
+  }
+
+  private void initChangesFeeds() {
+    Observable
+      .from(databasesMapping.entrySet())
+      .flatMap(entry -> get("/" + entry.getValue() + "/_changes?feed=continuous&include_docs=true&since=now")
+        .retry()
+        .flatMap(HttpClientResponse::toObservable)
+        .map(Buffer::toString)
+        .scan(new Acc(), this::accumulateJsonObjects)
+        .filter(Acc::hasObject)
+        .map(Acc::getObj)
+        .filter(change -> !change.getString("id").startsWith("_design"))
+        .map(change -> {
+          String seq = change.getString("seq");
+          JsonObject doc = change.getJsonObject("doc");
+          return records.offer(createRecord(entry.getValue(), seq, entry.getKey(), doc));
+        })
+        .doOnError(e -> LOG.error(
+          "Error while listening to changes from '" + entry.getValue() + "' database", e
+        ))
+      )
+      .toCompletable()
+      .await();
   }
 
   @Override
@@ -119,6 +175,7 @@ public class CouchDBSourceTask extends SourceTask {
     auth = config.getBasicAuth();
     databasesMapping = config.getTopicsToDatabasesMapping();
     converter = config.getConverter();
+    converter.configure(Collections.singletonMap("schemas.enable", false), false);
     maxBatchSize = config.getInt(SOURCE_MAX_BATCH_SIZE_CONFIG);
 
     httpClient = Vertx.vertx().createHttpClient(config.getHttpClientOptions());
@@ -136,7 +193,7 @@ public class CouchDBSourceTask extends SourceTask {
     records.peek();
 
     // While records are available add them to the list until the queue is depleted or we reach maxBatchSize
-    while (records.peek() != null && batch.size() <= maxBatchSize) {
+    while (records.peek() != null && batch.size() < maxBatchSize) {
       batch.add(records.take());
     }
 
