@@ -317,7 +317,18 @@ class CouchDBConnectorConfig extends AbstractConfig {
   }
 
   Map<String, String> getTopicsToIdFieldsMapping() {
-    return getMapping(getString(TOPICS_TO_ID_FIELDS_MAPPING_CONFIG));
+    Map<String, String> topicsToIdFieldsMapping = getMapping(getString(TOPICS_TO_ID_FIELDS_MAPPING_CONFIG));
+
+    for (String sinkTopic : getSinkTopicsToDatabasesMapping().keySet()) {
+      if (!topicsToIdFieldsMapping.keySet().contains(sinkTopic)) {
+        throw new ConfigException(
+          "The Kafka topic '" + sinkTopic +
+            "' does not have a corresponding '" + TOPICS_TO_ID_FIELDS_MAPPING_CONFIG + "' setting"
+        );
+      }
+    }
+
+    return topicsToIdFieldsMapping;
   }
 
   HttpClientOptions getHttpClientOptions() {

@@ -18,6 +18,7 @@ package com.xebia.kafka.connect.couchdb;
 
 import com.xebia.kafka.connect.couchdb.merging.LatestWinsMerger;
 import io.vertx.core.http.HttpClientOptions;
+import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.connect.json.JsonConverter;
 import org.junit.Test;
 
@@ -110,6 +111,16 @@ public class CouchDBConnectorConfigTest {
     assertEquals(
       "id-field-example", mapping.get("kafka-example"),
       "have correct value for first entry"
+    );
+
+    CouchDBConnectorConfig incorrectConfig = TestUtils.createConfig(
+      "sink-topics-to-databases-mapping=MyTopic/MyDatabase,MyOtherTopic/MyOtherDatabase",
+      "topics-to-id-fields-mapping=MyOtherTopic/MyOtherIdField"
+    );
+
+    assertThrows(
+      ConfigException.class, incorrectConfig::getTopicsToIdFieldsMapping,
+      "should fail when not all topics specified for sink have an id field specified"
     );
   }
 
