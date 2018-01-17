@@ -85,12 +85,23 @@ class CouchDBConnectorConfig extends AbstractConfig {
     "The password used for authenticating with CouchDB. Leave empty for public databases";
   private static final String COUCHDB_PASSWORD_DEFAULT = "";
 
-  private static final String TOPICS_TO_DATABASES_MAPPING_CONFIG = "topics-to-databases-mapping";
-  private static final String TOPICS_TO_DATABASES_MAPPING_DISPLAY = "Kafka topic -> CouchDB database mapping";
-  private static final String TOPICS_TO_DATABASES_MAPPING_DOC =
+  private static final String SINK_TOPICS_TO_DATABASES_MAPPING_CONFIG =
+    "sink-topics-to-databases-mapping";
+  private static final String SINK_TOPICS_TO_DATABASES_MAPPING_DISPLAY = 
+    "Kafka topic -> CouchDB database mapping for sink";
+  private static final String SINK_TOPICS_TO_DATABASES_MAPPING_DOC =
     "A comma separated list of key/value pairs specifying which Kafka topic should be stored in which " +
-      "CouchDB database. The database will need to be present in CouchDB. The key/value pairs should " +
-      "follow the following syntax: {topic}/{database}";
+      "CouchDB database. The database will need to be present in CouchDB. " +
+      "The key/value pairs should follow the following syntax: {topic}/{database}";
+
+  private static final String SOURCE_TOPICS_TO_DATABASES_MAPPING_CONFIG =
+    "source-topics-to-databases-mapping";
+  private static final String SOURCE_TOPICS_TO_DATABASES_MAPPING_DISPLAY =
+    "Kafka topic -> CouchDB database mapping for source";
+  private static final String SOURCE_TOPICS_TO_DATABASES_MAPPING_DOC =
+    "A comma separated list of key/value pairs specifying which CouchDB database should be listened to " +
+      "for their changes and to which Kafka topic those changes should be published. " +
+      "The key/value pairs should follow the following syntax: {topic}/{database}";
 
   private static final String CONVERTER_CONFIG = "converter";
   private static final String CONVERTER_DISPLAY = "The converter class to use";
@@ -119,10 +130,10 @@ class CouchDBConnectorConfig extends AbstractConfig {
   static final String SOURCE_MAX_BATCH_SIZE_CONFIG = "max-source-batch-size";
   private static final String SOURCE_MAX_BATCH_SIZE_DISPLAY = "Maximum source batch size";
   private static final String SOURCE_MAX_BATCH_SIZE_DOC =
-    "When the source connector is polled by Kafka the in-memory queue with CouchDB documents will be called " +
-      "to fetch the new data. " +
-      "When the queue contains multiple items they will be fetched until the size in this setting is reached " +
-      "or the queue is depleted. " +
+    "When the source connector is polled by Kafka the in-memory queue with CouchDB documents will be " +
+      "called to fetch the new data. " +
+      "When the queue contains multiple items they will be fetched until the size in this setting is " +
+      "reached or the queue is depleted. " +
       "As such creating a batch mechanism to empty the queue.";
   private static final int SOURCE_MAX_BATCH_SIZE_DEFAULT = 12;
 
@@ -190,20 +201,28 @@ class CouchDBConnectorConfig extends AbstractConfig {
         ConfigDef.Width.SHORT,
         COUCHDB_PASSWORD_DISPLAY)
 
-      .define(TOPICS_TO_DATABASES_MAPPING_CONFIG,
+      .define(SINK_TOPICS_TO_DATABASES_MAPPING_CONFIG,
         ConfigDef.Type.STRING,
         ConfigDef.Importance.HIGH,
-        TOPICS_TO_DATABASES_MAPPING_DOC,
+        SINK_TOPICS_TO_DATABASES_MAPPING_DOC,
         CONNECTOR_GROUP, 1,
         ConfigDef.Width.LONG,
-        TOPICS_TO_DATABASES_MAPPING_DISPLAY)
+        SINK_TOPICS_TO_DATABASES_MAPPING_DISPLAY)
+
+      .define(SOURCE_TOPICS_TO_DATABASES_MAPPING_CONFIG,
+        ConfigDef.Type.STRING,
+        ConfigDef.Importance.HIGH,
+        SOURCE_TOPICS_TO_DATABASES_MAPPING_DOC,
+        CONNECTOR_GROUP, 2,
+        ConfigDef.Width.LONG,
+        SOURCE_TOPICS_TO_DATABASES_MAPPING_DISPLAY)
 
       .define(CONVERTER_CONFIG,
         ConfigDef.Type.STRING,
         CONVERTER_DEFAULT,
         ConfigDef.Importance.HIGH,
         CONVERTER_DOC,
-        CONNECTOR_GROUP, 2,
+        CONNECTOR_GROUP, 3,
         ConfigDef.Width.LONG,
         CONVERTER_DISPLAY)
 
@@ -212,7 +231,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
         MERGER_DEFAULT,
         ConfigDef.Importance.HIGH,
         MERGER_DOC,
-        CONNECTOR_GROUP, 3,
+        CONNECTOR_GROUP, 4,
         ConfigDef.Width.LONG,
         MERGER_DISPLAY)
 
@@ -221,7 +240,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
         MAX_CONFLICTING_DOCS_FETCH_RETRIES_DEFAULT,
         ConfigDef.Importance.MEDIUM,
         MAX_CONFLICTING_DOCS_FETCH_RETRIES_DOC,
-        CONNECTOR_GROUP, 4,
+        CONNECTOR_GROUP, 5,
         ConfigDef.Width.LONG,
         MAX_CONFLICTING_DOCS_FETCH_RETRIES_DISPLAY)
 
@@ -230,7 +249,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
         SOURCE_MAX_BATCH_SIZE_DEFAULT,
         ConfigDef.Importance.MEDIUM,
         SOURCE_MAX_BATCH_SIZE_DOC,
-        CONNECTOR_GROUP, 5,
+        CONNECTOR_GROUP, 6,
         ConfigDef.Width.LONG,
         SOURCE_MAX_BATCH_SIZE_DISPLAY);
   }
@@ -274,8 +293,12 @@ class CouchDBConnectorConfig extends AbstractConfig {
     return mapping;
   }
 
-  Map<String, String> getTopicsToDatabasesMapping() {
-    return getMapping(getString(TOPICS_TO_DATABASES_MAPPING_CONFIG));
+  Map<String, String> getSinkTopicsToDatabasesMapping() {
+    return getMapping(getString(SINK_TOPICS_TO_DATABASES_MAPPING_CONFIG));
+  }
+
+  Map<String, String> getSourceTopicsToDatabasesMapping() {
+    return getMapping(getString(SOURCE_TOPICS_TO_DATABASES_MAPPING_CONFIG));
   }
 
   HttpClientOptions getHttpClientOptions() {

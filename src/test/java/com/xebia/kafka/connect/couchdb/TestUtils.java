@@ -26,19 +26,19 @@ import java.util.Map;
 import java.util.Properties;
 
 public class TestUtils {
-  public static JsonObject newDoc = Json.mapper.convertValue(
+  public static final JsonObject TEST_NEW_DOC = Json.mapper.convertValue(
     "{\"_id\":\"1\",\"foo\":\"bar\"}",
     JsonObject.class
   );
-  public static JsonObject latestRev = Json.mapper.convertValue(
+  public static final JsonObject TEST_LATEST_REV = Json.mapper.convertValue(
     "{\"_id\":\"1\",\"_rev\":\"3\",\"bar\":\"baz\"}",
     JsonObject.class
   );
-  public static JsonObject conflict1 = Json.mapper.convertValue(
+  public static final JsonObject TEST_CONFLICT1 = Json.mapper.convertValue(
     "{\"_id\":\"1\",\"_rev\":\"2\",\"baz\":\"foo\"}",
     JsonObject.class
   );
-  public static JsonObject conflict2 = Json.mapper.convertValue(
+  public static final JsonObject TEST_CONFLICT2 = Json.mapper.convertValue(
     "{\"_id\":\"1\",\"_rev\":\"1\",\"bar\":\"foo\"}",
     JsonObject.class
   );

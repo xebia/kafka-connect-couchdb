@@ -173,7 +173,7 @@ public class CouchDBSourceTask extends SourceTask {
   public void start(Map<String, String> properties) {
     CouchDBConnectorConfig config = new CouchDBConnectorConfig(properties);
     auth = config.getBasicAuth();
-    databasesMapping = config.getTopicsToDatabasesMapping();
+    databasesMapping = config.getSourceTopicsToDatabasesMapping();
     converter = config.getConverter();
     converter.configure(Collections.singletonMap("schemas.enable", false), false);
     maxBatchSize = config.getInt(SOURCE_MAX_BATCH_SIZE_CONFIG);

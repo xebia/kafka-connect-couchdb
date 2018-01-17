@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static com.xebia.kafka.connect.couchdb.TestUtils.latestRev;
+import static com.xebia.kafka.connect.couchdb.TestUtils.TEST_LATEST_REV;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -41,7 +41,7 @@ public class CouchDBSourceTaskIT {
     mockCouchDBServer.start();
 
     Map<String, String> config = TestUtils.createConfigMap();
-    config.put("topics-to-databases-mapping", "MyTopic/MyDatabase,MyOtherTopic/MyOtherDatabase");
+    config.put("source-topics-to-databases-mapping", "MyTopic/MyDatabase,MyOtherTopic/MyOtherDatabase");
     sourceTask = new CouchDBSourceTask();
     sourceTask.start(config);
   }
@@ -84,13 +84,13 @@ public class CouchDBSourceTaskIT {
     assertTrue(
       docs
         .get()
-        .allMatch(d -> latestRev.getString("_id").equals(d.get("_id"))),
+        .allMatch(d -> TEST_LATEST_REV.getString("_id").equals(d.get("_id"))),
       "all docs should have correct _id"
     );
     assertTrue(
       docs
         .get()
-        .allMatch(d -> latestRev.getString("_rev").equals(d.get("_rev"))),
+        .allMatch(d -> TEST_LATEST_REV.getString("_rev").equals(d.get("_rev"))),
       "all docs should have correct _rev"
     );
   }

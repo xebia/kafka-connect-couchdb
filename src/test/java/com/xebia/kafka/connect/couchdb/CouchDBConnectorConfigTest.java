@@ -72,15 +72,29 @@ public class CouchDBConnectorConfigTest {
   }
 
   @Test
-  public void getTopicsToDatabasesMappingTest() {
-    Map<String, String> mapping = config.getTopicsToDatabasesMapping();
+  public void getSinkTopicsToDatabasesMappingTest() {
+    Map<String, String> mapping = config.getSinkTopicsToDatabasesMapping();
 
     assertEquals(
       1, mapping.size(),
       "1 map entry should have been created"
     );
     assertEquals(
-      mapping.get("couchdb-example"), "couchdb-example",
+      "couchdb-example", mapping.get("kafka-example"),
+      "have correct value for first entry"
+    );
+  }
+
+  @Test
+  public void getSourceTopicsToDatabasesMappingTest() {
+    Map<String, String> mapping = config.getSourceTopicsToDatabasesMapping();
+
+    assertEquals(
+      1, mapping.size(),
+      "1 map entry should have been created"
+    );
+    assertEquals(
+      "couchdb-example", mapping.get("kafka-example"),
       "have correct value for first entry"
     );
   }

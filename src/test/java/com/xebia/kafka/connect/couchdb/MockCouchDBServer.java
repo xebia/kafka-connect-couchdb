@@ -47,10 +47,10 @@ class MockCouchDBServer {
   private void handleGET(HttpServerRequest req) {
     if (req.query().contains("conflicts=true")) {
       JsonArray conflicts = new JsonArray();
-      conflicts.add(conflict1.getString("_rev"));
-      conflicts.add(conflict2.getString("_rev"));
+      conflicts.add(TEST_CONFLICT1.getString("_rev"));
+      conflicts.add(TEST_CONFLICT2.getString("_rev"));
 
-      JsonObject latestRevCopy = latestRev.copy();
+      JsonObject latestRevCopy = TEST_LATEST_REV.copy();
       latestRevCopy.put("_conflicts", conflicts);
 
       req.response().end(latestRevCopy.encode());
@@ -59,19 +59,19 @@ class MockCouchDBServer {
       String rev = req.query().split("=")[1];
       switch (rev) {
         case "1":
-          req.response().end(conflict2.copy().encode());
+          req.response().end(TEST_CONFLICT2.copy().encode());
           break;
         case "2":
-          req.response().end(conflict1.copy().encode());
+          req.response().end(TEST_CONFLICT1.copy().encode());
           break;
         case "3":
-          req.response().end(latestRev.copy().encode());
+          req.response().end(TEST_LATEST_REV.copy().encode());
           break;
       }
 
     } else if (req.path().contains("_changes")) {
       JsonObject change = new JsonObject();
-      change.put("rev", latestRev.getString("_rev"));
+      change.put("rev", TEST_LATEST_REV.getString("_rev"));
 
       JsonArray changes = new JsonArray();
       changes.add(change);
@@ -80,7 +80,7 @@ class MockCouchDBServer {
       body.put("id", "1");
       body.put("seq", "1");
       body.put("changes", changes);
-      body.put("doc", latestRev);
+      body.put("doc", TEST_LATEST_REV);
       String chunk = body.encode() + "\n";
 
       String[] chunks = new String[20];

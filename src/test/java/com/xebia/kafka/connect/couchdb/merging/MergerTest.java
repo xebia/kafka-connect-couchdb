@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class MergerTest {
   @Test
   public void processTest() {
-    MergeResult mr = new MergeResult(newDoc, Arrays.asList(latestRev, conflict1, conflict2));
+    MergeResult mr = new MergeResult(TEST_NEW_DOC, Arrays.asList(TEST_LATEST_REV, TEST_CONFLICT1, TEST_CONFLICT2));
     List<JsonObject> processed = Merger.process(mr);
 
     assertTrue(

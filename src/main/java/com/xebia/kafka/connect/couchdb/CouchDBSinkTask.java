@@ -41,6 +41,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.xebia.kafka.connect.couchdb.CouchDBConnectorConfig.Constants.*;
 import static com.xebia.kafka.connect.couchdb.CouchDBConnectorConfig.MAX_CONFLICTING_DOCS_FETCH_RETRIES_CONFIG;
@@ -192,7 +193,7 @@ public class CouchDBSinkTask extends SinkTask {
     CouchDBConnectorConfig config = new CouchDBConnectorConfig(properties);
 
     auth = config.getBasicAuth();
-    databasesMapping = config.getTopicsToDatabasesMapping();
+    databasesMapping = config.getSinkTopicsToDatabasesMapping();
     converter = config.getConverter();
     converter.configure(Collections.singletonMap("schemas.enable", false), false);
     merger = config.getMerger();
@@ -205,16 +206,12 @@ public class CouchDBSinkTask extends SinkTask {
   public void put(Collection<SinkRecord> records) {
     Observable
       .from(records)
+      .filter(record -> Objects.nonNull(databasesMapping.get(record.topic())))
       .flatMap(record -> {
         String topic = record.topic();
 
-        String dbName;
-        try {
-          dbName = databasesMapping.get(topic);
-        } catch (NullPointerException e) {
-          LOG.error("No database mapping found for topic {}", topic);
-          return Observable.error(e);
-        }
+        // Safe, as the filter above guarantees the presence
+        String dbName = databasesMapping.get(topic);
 
         JsonObject newDoc;
         try {

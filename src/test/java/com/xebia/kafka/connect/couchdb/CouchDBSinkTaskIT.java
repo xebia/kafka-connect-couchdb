@@ -50,12 +50,12 @@ public class CouchDBSinkTaskIT {
       Schema.STRING_SCHEMA,
       "MyKey",
       Schema.STRING_SCHEMA,
-      newDoc.encode(),
+      TEST_NEW_DOC.encode(),
       1
     ));
 
     Map<String, String> config = TestUtils.createConfigMap();
-    config.put("topics-to-databases-mapping", "MyTopic/MyDatabase");
+    config.put("sink-topics-to-databases-mapping", "MyTopic/MyDatabase");
     sinkTask = new CouchDBSinkTask();
     sinkTask.start(config);
   }
@@ -72,7 +72,7 @@ public class CouchDBSinkTaskIT {
     sinkTask.put(records);
 
     assertEquals(
-      newDoc.encode(), postData.get("/MyDatabase").encode(),
+      TEST_NEW_DOC.encode(), postData.get("/MyDatabase").encode(),
       "should post new document to correct path"
     );
   }
@@ -84,21 +84,21 @@ public class CouchDBSinkTaskIT {
     sinkTask.put(records);
 
     assertEquals(
-      postData.get("/MyDatabase").encode(), newDoc.encode(),
+      TEST_NEW_DOC.encode(), postData.get("/MyDatabase").encode(),
       "should try to insert doc"
     );
 
-    JsonObject newDocCopy = newDoc
+    JsonObject newDocCopy = TEST_NEW_DOC
       .copy()
-      .put("_rev", latestRev.getString("_rev"));
-    JsonObject latestRevCopy = latestRev
+      .put("_rev", TEST_LATEST_REV.getString("_rev"));
+    JsonObject latestRevCopy = TEST_LATEST_REV
       .copy()
       .put("_conflicts", new JsonArray(Arrays.asList("2", "1")))
       .put("_deleted", true);
-    JsonObject conflict1Copy = conflict1
+    JsonObject conflict1Copy = TEST_CONFLICT1
       .copy()
       .put("_deleted", true);
-    JsonObject conflict2Copy = conflict2
+    JsonObject conflict2Copy = TEST_CONFLICT2
       .copy()
       .put("_deleted", true);
 
@@ -113,8 +113,8 @@ public class CouchDBSinkTaskIT {
 
     assertEquals(
       expected.encode(), postData.get("/MyDatabase/_bulk_docs").encode(),
-      "should post to _bulk_docs a collection containing the newDoc with latest rev appended and " +
-        "latestRev plus conflicts marked for deletion"
+      "should post to _bulk_docs a collection containing the TEST_NEW_DOC with latest rev appended and " +
+        "TEST_LATEST_REV plus conflicts marked for deletion"
     );
   }
 }

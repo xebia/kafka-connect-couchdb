@@ -28,14 +28,14 @@ public class LatestWinsMergerTest {
 
   @Test
   public void mergeTest() {
-    MergeResult mr = lwm.merge(newDoc, latestRev, Arrays.asList(conflict1, conflict2));
+    MergeResult mr = lwm.merge(TEST_NEW_DOC, TEST_LATEST_REV, Arrays.asList(TEST_CONFLICT1, TEST_CONFLICT2));
 
     assertEquals(
-      newDoc, mr.getWinner(),
-      "winning doc should be newDoc"
+      TEST_NEW_DOC, mr.getWinner(),
+      "winning doc should be TEST_NEW_DOC"
     );
     assertEquals(
-      Arrays.asList(latestRev, conflict1, conflict2), mr.getLosers(),
+      Arrays.asList(TEST_LATEST_REV, TEST_CONFLICT1, TEST_CONFLICT2), mr.getLosers(),
       "losing docs should be all others"
     );
   }
