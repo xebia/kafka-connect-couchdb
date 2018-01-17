@@ -103,6 +103,13 @@ class CouchDBConnectorConfig extends AbstractConfig {
       "for their changes and to which Kafka topic those changes should be published. " +
       "The key/value pairs should follow the following syntax: {topic}/{database}";
 
+  private static final String TOPICS_TO_ID_FIELDS_MAPPING_CONFIG = "topics-to-id-fields-mapping";
+  private static final String TOPICS_TO_ID_FIELDS_MAPPING_DISPLAY = "Kafka topic -> JSON id field name";
+  private static final String TOPICS_TO_ID_FIELDS_MAPPING_DOC =
+    "A comma separated list of key/value pairs specifying which field from a Kafka record's value should " +
+      "be used as the ID. The ID is used to identify a unique document within CouchDB." +
+      "The key/value pairs should follow the following syntax: {topic}/{database}";
+
   private static final String CONVERTER_CONFIG = "converter";
   private static final String CONVERTER_DISPLAY = "The converter class to use";
   private static final String CONVERTER_DOC =
@@ -217,12 +224,20 @@ class CouchDBConnectorConfig extends AbstractConfig {
         ConfigDef.Width.LONG,
         SOURCE_TOPICS_TO_DATABASES_MAPPING_DISPLAY)
 
+      .define(TOPICS_TO_ID_FIELDS_MAPPING_CONFIG,
+        ConfigDef.Type.STRING,
+        ConfigDef.Importance.HIGH,
+        TOPICS_TO_ID_FIELDS_MAPPING_DOC,
+        CONNECTOR_GROUP, 3,
+        ConfigDef.Width.LONG,
+        TOPICS_TO_ID_FIELDS_MAPPING_DISPLAY)
+
       .define(CONVERTER_CONFIG,
         ConfigDef.Type.STRING,
         CONVERTER_DEFAULT,
         ConfigDef.Importance.HIGH,
         CONVERTER_DOC,
-        CONNECTOR_GROUP, 3,
+        CONNECTOR_GROUP, 4,
         ConfigDef.Width.LONG,
         CONVERTER_DISPLAY)
 
@@ -231,7 +246,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
         MERGER_DEFAULT,
         ConfigDef.Importance.HIGH,
         MERGER_DOC,
-        CONNECTOR_GROUP, 4,
+        CONNECTOR_GROUP, 5,
         ConfigDef.Width.LONG,
         MERGER_DISPLAY)
 
@@ -240,7 +255,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
         MAX_CONFLICTING_DOCS_FETCH_RETRIES_DEFAULT,
         ConfigDef.Importance.MEDIUM,
         MAX_CONFLICTING_DOCS_FETCH_RETRIES_DOC,
-        CONNECTOR_GROUP, 5,
+        CONNECTOR_GROUP, 6,
         ConfigDef.Width.LONG,
         MAX_CONFLICTING_DOCS_FETCH_RETRIES_DISPLAY)
 
@@ -249,7 +264,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
         SOURCE_MAX_BATCH_SIZE_DEFAULT,
         ConfigDef.Importance.MEDIUM,
         SOURCE_MAX_BATCH_SIZE_DOC,
-        CONNECTOR_GROUP, 6,
+        CONNECTOR_GROUP, 7,
         ConfigDef.Width.LONG,
         SOURCE_MAX_BATCH_SIZE_DISPLAY);
   }
@@ -299,6 +314,10 @@ class CouchDBConnectorConfig extends AbstractConfig {
 
   Map<String, String> getSourceTopicsToDatabasesMapping() {
     return getMapping(getString(SOURCE_TOPICS_TO_DATABASES_MAPPING_CONFIG));
+  }
+
+  Map<String, String> getTopicsToIdFieldsMapping() {
+    return getMapping(getString(TOPICS_TO_ID_FIELDS_MAPPING_CONFIG));
   }
 
   HttpClientOptions getHttpClientOptions() {

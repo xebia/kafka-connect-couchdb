@@ -100,6 +100,20 @@ public class CouchDBConnectorConfigTest {
   }
 
   @Test
+  public void getTopicsToIdFieldsMappingTest() {
+    Map<String, String> mapping = config.getTopicsToIdFieldsMapping();
+
+    assertEquals(
+      1, mapping.size(),
+      "1 map entry should have been created"
+    );
+    assertEquals(
+      "id-field-example", mapping.get("kafka-example"),
+      "have correct value for first entry"
+    );
+  }
+
+  @Test
   public void getHttpClientOptionsTest() {
     HttpClientOptions httpClientOptions = config.getHttpClientOptions();
 

@@ -71,6 +71,7 @@ public class CouchDBSinkTask extends SinkTask {
 
   private String auth;
   private Map<String, String> databasesMapping;
+  private Map<String, String> idFieldsMapping;
   private Converter converter;
   private Merger merger;
   private int maxConflictingDocsFetchRetries;
@@ -194,6 +195,7 @@ public class CouchDBSinkTask extends SinkTask {
 
     auth = config.getBasicAuth();
     databasesMapping = config.getSinkTopicsToDatabasesMapping();
+    idFieldsMapping = config.getTopicsToIdFieldsMapping();
     converter = config.getConverter();
     converter.configure(Collections.singletonMap("schemas.enable", false), false);
     merger = config.getMerger();
@@ -216,24 +218,38 @@ public class CouchDBSinkTask extends SinkTask {
         JsonObject newDoc;
         try {
           byte[] newDocBytes = converter.fromConnectData(
-            record.topic(), record.valueSchema(), record.value()
+            record.topic(),
+            record.valueSchema(),
+            record.value()
           );
           newDoc = Json.mapper.readValue(newDocBytes, JsonObject.class);
         } catch (DataException | IOException e) {
-          LOG.error("Could not convert record to JSON on topic {}", topic);
+          LOG.error("Could not convert record to JSON on topic " + topic, e);
           return Observable.error(e);
         }
 
-        String id = newDoc.getString("_id");
+        String idFieldName;
+        try {
+          idFieldName = idFieldsMapping.get(record.topic());
+        } catch (NullPointerException e) {
+          LOG.error("No id field specified for topic " + topic + ", cannot process record", e);
+          return Observable.error(e);
+        }
+
+        String id = newDoc.getString(idFieldName);
         if (id == null) {
           LOG.error(
-            "Conversion result JSON from topic {} did not contain a valid _id field\nMessage: {}",
+            "Conversion result JSON from topic {} did not contain {} field\nJSON data: {}",
             topic,
+            idFieldName,
             newDoc.encodePrettily()
           );
           return Observable
-            .error(new RuntimeException("No valid _id field present in conversion result JSON"));
+            .error(new RuntimeException(idFieldName + " field not present in conversion result JSON"));
         }
+
+        // Set the CouchDB specific _id field to the user-provided id value
+        newDoc.put("_id", id);
 
         // We try to insert the document as if it was new first
         return insert(dbName, newDoc)
