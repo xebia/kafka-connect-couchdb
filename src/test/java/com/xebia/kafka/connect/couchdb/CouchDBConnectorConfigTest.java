@@ -48,27 +48,59 @@ public class CouchDBConnectorConfigTest {
   }
 
   @Test
+  public void getListingTest() {
+    List<String> listing = config.getListing("foo,bar,baz");
+
+    assertEquals(
+      3, listing.size(),
+      "should have created 3 items"
+    );
+    assertEquals(
+      "foo", listing.get(0),
+      "should have correct value for first entry"
+    );
+    assertEquals(
+      "bar", listing.get(1),
+      "should have correct value for second entry"
+    );
+    assertEquals(
+      "baz", listing.get(2),
+      "should have correct value for third entry"
+    );
+  }
+
+  @Test
+  public void getTopicsTest() {
+    List<String> topics = config.getTopics();
+
+    assertEquals(
+      "kafka-example", topics.get(0),
+      "should contain the configured topic"
+    );
+  }
+
+  @Test
   public void getMappingTest() {
     Map<String, String> mapping = config.getMapping("foo/bar,bar/baz");
 
     assertEquals(
       2, mapping.size(),
-      "2 map entries should have been created"
+      "should have created 2 map entries"
     );
     assertEquals(
       "bar", mapping.get("foo"),
-      "have correct value for first entry"
+      "should have correct value for first entry"
     );
     assertEquals(
       "baz", mapping.get("bar"),
-      "have correct value for second entry"
+      "should have correct value for second entry"
     );
 
     mapping = config.getMapping("not a mapping at all");
 
     assertEquals(
-      mapping.size(), 0,
-      "no map entries should have been created for invalid mapping string"
+      0, mapping.size(),
+      "should not have created map entries for invalid mapping string"
     );
   }
 
@@ -82,7 +114,17 @@ public class CouchDBConnectorConfigTest {
     );
     assertEquals(
       "couchdb-example", mapping.get("kafka-example"),
-      "have correct value for first entry"
+      "should have correct value for first entry"
+    );
+
+    CouchDBConnectorConfig incorrectConfig = TestUtils.createConfig(
+      "topics=MyTopic,MyOtherTopic",
+      "sink-topics-to-databases-mapping=MyTopic/MyDatabase"
+    );
+
+    assertThrows(
+      ConfigException.class, incorrectConfig::getSinkTopicsToDatabasesMapping,
+      "should fail when not all topics specified have a database mapping"
     );
   }
 
@@ -92,11 +134,21 @@ public class CouchDBConnectorConfigTest {
 
     assertEquals(
       1, mapping.size(),
-      "1 map entry should have been created"
+      "should have been created 1 map entry"
     );
     assertEquals(
       "couchdb-example", mapping.get("kafka-example"),
-      "have correct value for first entry"
+      "should have correct value for first entry"
+    );
+
+    CouchDBConnectorConfig incorrectConfig = TestUtils.createConfig(
+      "topics=MyTopic,MyOtherTopic",
+      "source-topics-to-databases-mapping=MyTopic/MyDatabase"
+    );
+
+    assertThrows(
+      ConfigException.class, incorrectConfig::getSourceTopicsToDatabasesMapping,
+      "should fail when not all topics specified have a database mapping"
     );
   }
 
@@ -106,11 +158,11 @@ public class CouchDBConnectorConfigTest {
 
     assertEquals(
       1, mapping.size(),
-      "1 map entry should have been created"
+      "should have been created 1 map entry"
     );
     assertEquals(
       "id-field-example", mapping.get("kafka-example"),
-      "have correct value for first entry"
+      "should have correct value for first entry"
     );
 
     CouchDBConnectorConfig incorrectConfig = TestUtils.createConfig(
@@ -130,11 +182,11 @@ public class CouchDBConnectorConfigTest {
 
     assertEquals(
       1, mapping.size(),
-      "1 map entry should have been created"
+      "should have been created 1 map entry"
     );
     assertEquals(
       "0", mapping.get("couchdb-example"),
-      "have correct value for first entry"
+      "should have correct value for first entry"
     );
   }
 
@@ -183,7 +235,7 @@ public class CouchDBConnectorConfigTest {
 
     assertEquals(
       "Basic ", auth,
-      "when no user/pass is given auth should not contain them"
+      "should not contain user/pass when none are given"
     );
 
     CouchDBConnectorConfig config = TestUtils.createConfig(
@@ -196,7 +248,7 @@ public class CouchDBConnectorConfigTest {
 
     assertEquals(
       "Basic " + encoded, auth,
-      "when user/pass are given auth should contain them Base64 encoded"
+      "should contains Base64 encoded user/pass when user/pass are given"
     );
   }
 

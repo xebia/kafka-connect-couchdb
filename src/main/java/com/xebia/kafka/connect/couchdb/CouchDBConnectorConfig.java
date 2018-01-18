@@ -23,10 +23,13 @@ import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.connect.storage.Converter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -84,6 +87,11 @@ class CouchDBConnectorConfig extends AbstractConfig {
   private static final String COUCHDB_PASSWORD_DOC =
     "The password used for authenticating with CouchDB. Leave empty for public databases";
   private static final String COUCHDB_PASSWORD_DEFAULT = "";
+
+  private static final String TOPICS_CONFIG = "topics";
+  private static final String TOPICS_DISPLAY = "The Kafka topics to use";
+  private static final String TOPICS_DOC =
+    "A comma separated list of Kafka topics that are relevant to this connector.";
 
   private static final String SINK_TOPICS_TO_DATABASES_MAPPING_CONFIG =
     "sink-topics-to-databases-mapping";
@@ -154,6 +162,8 @@ class CouchDBConnectorConfig extends AbstractConfig {
       "As such creating a batch mechanism to empty the queue.";
   private static final int SOURCE_MAX_BATCH_SIZE_DEFAULT = 12;
 
+  private static final Logger LOG = LoggerFactory.getLogger(CouchDBConnectorConfig.class);
+
   private static ConfigDef baseConfigDef() {
     return new ConfigDef()
       .define(COUCHDB_HOST_CONFIG,
@@ -218,11 +228,19 @@ class CouchDBConnectorConfig extends AbstractConfig {
         ConfigDef.Width.SHORT,
         COUCHDB_PASSWORD_DISPLAY)
 
+      .define(TOPICS_CONFIG,
+        ConfigDef.Type.STRING,
+        ConfigDef.Importance.HIGH,
+        TOPICS_DOC,
+        CONNECTOR_GROUP, 1,
+        ConfigDef.Width.LONG,
+        TOPICS_DISPLAY)
+
       .define(SINK_TOPICS_TO_DATABASES_MAPPING_CONFIG,
         ConfigDef.Type.STRING,
         ConfigDef.Importance.HIGH,
         SINK_TOPICS_TO_DATABASES_MAPPING_DOC,
-        CONNECTOR_GROUP, 1,
+        CONNECTOR_GROUP, 2,
         ConfigDef.Width.LONG,
         SINK_TOPICS_TO_DATABASES_MAPPING_DISPLAY)
 
@@ -230,7 +248,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
         ConfigDef.Type.STRING,
         ConfigDef.Importance.HIGH,
         SOURCE_TOPICS_TO_DATABASES_MAPPING_DOC,
-        CONNECTOR_GROUP, 2,
+        CONNECTOR_GROUP, 3,
         ConfigDef.Width.LONG,
         SOURCE_TOPICS_TO_DATABASES_MAPPING_DISPLAY)
 
@@ -238,7 +256,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
         ConfigDef.Type.STRING,
         ConfigDef.Importance.HIGH,
         TOPICS_TO_ID_FIELDS_MAPPING_DOC,
-        CONNECTOR_GROUP, 3,
+        CONNECTOR_GROUP, 4,
         ConfigDef.Width.LONG,
         TOPICS_TO_ID_FIELDS_MAPPING_DISPLAY)
 
@@ -246,7 +264,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
         ConfigDef.Type.STRING,
         ConfigDef.Importance.HIGH,
         DATABASES_TO_CHANGES_SINCE_MAPPING_DOC,
-        CONNECTOR_GROUP, 4,
+        CONNECTOR_GROUP, 5,
         ConfigDef.Width.LONG,
         DATABASES_TO_CHANGES_SINCE_MAPPING_DISPLAY)
 
@@ -255,7 +273,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
         CONVERTER_DEFAULT,
         ConfigDef.Importance.MEDIUM,
         CONVERTER_DOC,
-        CONNECTOR_GROUP, 5,
+        CONNECTOR_GROUP, 6,
         ConfigDef.Width.LONG,
         CONVERTER_DISPLAY)
 
@@ -264,7 +282,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
         MERGER_DEFAULT,
         ConfigDef.Importance.MEDIUM,
         MERGER_DOC,
-        CONNECTOR_GROUP, 6,
+        CONNECTOR_GROUP, 7,
         ConfigDef.Width.LONG,
         MERGER_DISPLAY)
 
@@ -273,7 +291,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
         MAX_CONFLICTING_DOCS_FETCH_RETRIES_DEFAULT,
         ConfigDef.Importance.MEDIUM,
         MAX_CONFLICTING_DOCS_FETCH_RETRIES_DOC,
-        CONNECTOR_GROUP, 7,
+        CONNECTOR_GROUP, 8,
         ConfigDef.Width.LONG,
         MAX_CONFLICTING_DOCS_FETCH_RETRIES_DISPLAY)
 
@@ -282,7 +300,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
         SOURCE_MAX_BATCH_SIZE_DEFAULT,
         ConfigDef.Importance.MEDIUM,
         SOURCE_MAX_BATCH_SIZE_DOC,
-        CONNECTOR_GROUP, 8,
+        CONNECTOR_GROUP, 9,
         ConfigDef.Width.LONG,
         SOURCE_MAX_BATCH_SIZE_DISPLAY);
   }
@@ -312,6 +330,14 @@ class CouchDBConnectorConfig extends AbstractConfig {
     return taskConfigs;
   }
 
+  List<String> getListing(String listingString) {
+    return Arrays.asList(listingString.split(","));
+  }
+
+  List<String> getTopics() {
+    return getListing(getString(TOPICS_CONFIG));
+  }
+
   Map<String, String> getMapping(String mappingString) {
     String[] keyValuePairs = mappingString.split(",");
 
@@ -327,11 +353,45 @@ class CouchDBConnectorConfig extends AbstractConfig {
   }
 
   Map<String, String> getSinkTopicsToDatabasesMapping() {
-    return getMapping(getString(SINK_TOPICS_TO_DATABASES_MAPPING_CONFIG));
+    Map<String, String> sinkTopicsToDatabasesMapping =
+      getMapping(getString(SINK_TOPICS_TO_DATABASES_MAPPING_CONFIG));
+
+    for (String topic : getTopics()) {
+      if (!sinkTopicsToDatabasesMapping.keySet().contains(topic)) {
+        throw new ConfigException(
+          "The Kafka topic '" + topic +
+            "' does not have a corresponding '" + SINK_TOPICS_TO_DATABASES_MAPPING_CONFIG + "' setting"
+        );
+      }
+    }
+
+    for (String topic : sinkTopicsToDatabasesMapping.keySet()) {
+      if (!getTopics().contains(topic)) {
+        LOG.warn(
+          "Topic '" + topic + "' was specified in " + SINK_TOPICS_TO_DATABASES_MAPPING_CONFIG +
+            "but not in " + TOPICS_CONFIG + ". Kafka will not send this connector messages from that " +
+            "topic until you also specify it in " + TOPICS_CONFIG
+        );
+      }
+    }
+
+    return sinkTopicsToDatabasesMapping;
   }
 
   Map<String, String> getSourceTopicsToDatabasesMapping() {
-    return getMapping(getString(SOURCE_TOPICS_TO_DATABASES_MAPPING_CONFIG));
+    Map<String, String> sourceTopicsToDatabasesMapping =
+      getMapping(getString(SOURCE_TOPICS_TO_DATABASES_MAPPING_CONFIG));
+
+    for (String topic : getTopics()) {
+      if (!sourceTopicsToDatabasesMapping.keySet().contains(topic)) {
+        throw new ConfigException(
+          "The Kafka topic '" + topic +
+            "' does not have a corresponding '" + SOURCE_TOPICS_TO_DATABASES_MAPPING_CONFIG + "' setting"
+        );
+      }
+    }
+
+    return sourceTopicsToDatabasesMapping;
   }
 
   Map<String, String> getTopicsToIdFieldsMapping() {

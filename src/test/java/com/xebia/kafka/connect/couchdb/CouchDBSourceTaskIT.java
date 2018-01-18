@@ -41,6 +41,7 @@ public class CouchDBSourceTaskIT {
     mockCouchDBServer.start();
 
     Map<String, String> config = TestUtils.createConfigMap();
+    config.put("topics", "MyTopic,MyOtherTopic");
     config.put("source-topics-to-databases-mapping", "MyTopic/MyDatabase,MyOtherTopic/MyOtherDatabase");
     sourceTask = new CouchDBSourceTask();
     sourceTask.start(config);
