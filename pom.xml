@@ -74,11 +74,6 @@
         <junit.jupiter.version>5.0.2</junit.jupiter.version>
         <junit.vintage.version>${junit.version}.2</junit.vintage.version>
         <junit.platform.version>1.0.2</junit.platform.version>
-        <!--
-            When deploying, don't promote artifacts from staging repository
-            unless 'release' profile is active
-        -->
-        <autoReleaseAfterClose>false</autoReleaseAfterClose>
     </properties>
 
     <dependencies>
@@ -332,31 +327,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.8</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <serverId>ossrh</serverId>
-                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                    <autoReleaseAfterClose>${autoReleaseAfterClose}</autoReleaseAfterClose>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-                <version>1.6</version>
-                <executions>
-                    <execution>
-                        <id>sign-artifacts</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>sign</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
         <resources>
             <resource>
@@ -365,6 +335,55 @@
             </resource>
         </resources>
     </build>
+
+    <profiles>
+        <profile>
+            <id>ossrh</id>
+            <properties>
+                <gpg.executable>gpg</gpg.executable>
+                <gpg.keyname>${env.GPG_KEYNAME}</gpg.keyname>
+                <gpg.passphrase>${env.GPG_PASSPHRASE}</gpg.passphrase>
+                <gpg.defaultKeyring>false</gpg.defaultKeyring>
+                <gpg.publicKeyring>${env.GPG_DIR}/pubring.gpg</gpg.publicKeyring>
+                <gpg.secretKeyring>${env.GPG_DIR}/secring.gpg</gpg.secretKeyring>
+            </properties>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.8</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <distributionManagement>
         <snapshotRepository>
@@ -376,16 +395,4 @@
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
     </distributionManagement>
-
-    <profiles>
-        <profile>
-            <id>release</id>
-            <properties>
-                <autoReleaseAfterClose>true</autoReleaseAfterClose>
-            </properties>
-        </profile>
-        <profile>
-            <id>stage</id>
-        </profile>
-    </profiles>
 </project>
