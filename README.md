@@ -1,4 +1,5 @@
 ![Build status](https://travis-ci.org/xebia/kafka-connect-couchdb.svg?branch=master "Build status")
+![Test coverage](https://codecov.io/gh/xebia/kafka-connect-couchdb/branch/master/graph/badge.svg "Test coverage")
 
 Kafka Connect CouchDB Connector
 ===============================
