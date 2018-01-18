@@ -1,3 +1,5 @@
+![Build status](https://travis-ci.org/xebia/kafka-connect-couchdb.svg?branch=master "Build status")
+
 Kafka Connect CouchDB Connector
 ===============================
 kafka-connect-couchdb is a [Kafka Connect](http://kafka.apache.org/documentation.html#connect)
