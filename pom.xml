@@ -1,3 +1,19 @@
+<!--
+  ~ Copyright 2018 Xebia
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -9,10 +25,24 @@
     <packaging>jar</packaging>
 
     <name>Kafka connector for CouchDB</name>
+    <description>
+        A Kafka Connect implementation for sending data between Kafka and CouchDB.
+    </description>
+    <url>https://github.com/xebia/kafka-connect-couchdb</url>
+
     <organization>
         <name>Xebia</name>
         <url>http://xebia.com</url>
     </organization>
+
+    <developers>
+        <developer>
+            <id>DennisVis</id>
+            <name>Dennis Vis</name>
+            <email>dvis@xebia.com</email>
+            <url>https://github.com/DennisVis</url>
+        </developer>
+    </developers>
 
     <licenses>
         <license>
@@ -34,15 +64,6 @@
         <url>https://github.com/xebia/kafka-connect-couchdb/issues</url>
     </issueManagement>
 
-    <developers>
-        <developer>
-            <id>DennisVis</id>
-            <name>Dennis Vis</name>
-            <email>dvis@xebia.com</email>
-            <url>https://github.com/DennisVis</url>
-        </developer>
-    </developers>
-
     <properties>
         <java-compat.version>1.8</java-compat.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -53,6 +74,11 @@
         <junit.jupiter.version>5.0.2</junit.jupiter.version>
         <junit.vintage.version>${junit.version}.2</junit.vintage.version>
         <junit.platform.version>1.0.2</junit.platform.version>
+        <!--
+            When deploying, don't promote artifacts from staging repository
+            unless 'release' profile is active
+        -->
+        <autoReleaseAfterClose>false</autoReleaseAfterClose>
     </properties>
 
     <dependencies>
@@ -112,18 +138,6 @@
             <artifactId>junit-vintage-engine</artifactId>
             <version>${junit.vintage.version}</version>
             <scope>test</scope>
-        </dependency>
-        <!-- To avoid compiler warnings about @API annotations in JUnit code -->
-        <dependency>
-            <groupId>org.apiguardian</groupId>
-            <artifactId>apiguardian-api</artifactId>
-            <version>1.0.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.2.3</version>
         </dependency>
     </dependencies>
 
@@ -292,6 +306,43 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.8</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>${autoReleaseAfterClose}</autoReleaseAfterClose>
+                </configuration>
+            </plugin>
         </plugins>
         <resources>
             <resource>
@@ -301,20 +352,22 @@
         </resources>
     </build>
 
-    <reporting>
-        <plugins>
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <reportSets>
-                    <reportSet>
-                        <reports>
-                            <!-- select non-aggregate reports -->
-                            <report>report</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-        </plugins>
-    </reporting>
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <properties>
+                <autoReleaseAfterClose>true</autoReleaseAfterClose>
+            </properties>
+        </profile>
+        <profile>
+            <id>stage</id>
+        </profile>
+    </profiles>
 </project>

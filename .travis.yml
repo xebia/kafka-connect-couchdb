@@ -1,0 +1,20 @@
+language: java
+
+sudo: false
+
+jdk: oraclejdk8
+
+script: mvn clean verify
+
+cache:
+  directories:
+  - "$HOME/.m2"
+
+env:
+  global:
+  - secure: EbGfVNbdkdNjR4IN+U2PbFiMpW3+RaXAZV39+CnP6EmTDIZeQtFRGQay/QJh9jzpz1noGY1grrd0B0mhcrmbSQKrBkF7JwNsX9kYAAQwfXoMs2W5uWMROi/EotpAo4YxcKYLJ9dV3ByuYvpf+xlgHQfGUL56NjTvdgPztlVkLUJ32EITVu9UziBoAI6szfN+DMJIVdJPwntWasnoPTmNSuISXtXKXB98hBSTa87Z4S2+iZhUjs/5HtN1aFcUreFJoZXRAsexRqaJ6zHEfoMzMb/W5jOYK5wXJwCXZh80q44w3+cRN3GzV1sFVUxJRgDqc9hC7p+GLxIOZMqTAypOJUlxqYBUYkTy51J39mNQemUC9U4S4fS18mdKqDL8RquUucLV8yEDiBYVRVPQGRZgErEuWGPJlTYFT3Ct4eIE5ozvAqqqKHrr2scn0/5bQd6/XqWuK0NtEoX3xZx6wy79u0kizhdOIUbPPqErR+T+6SzmGo+nwyfxchwZUOQEErH59Ve+17HxazV42iEzmlWUsWvVdPOh5vuO4IBkXm8p4ur1E1dg45t3EDBRGDr6bqsJWigB/ClvNmBz+MeWN9UWPOfqtz6goNVgkK40QuBFFjD9fc2fyRRMFPOjDqE6L3f6P3Bgx/akdkb7YEHPcMo0f4tctDCeQutpxn/9f03s2Hc=
+  - secure: H+LEzFgpl/y4JdbeLzNmemnjlSVBLl11ocgdZ4AI0MnjZdnWgw7zo2mB8yr57wVrtojNHHiyEUcD4ZlOSmWJ7Xf+3up597dHcybIwMJiyMghebWcqoLDNlt1PCOSCnBWTJFkjrrROfyEl6PCaT4egET8ReuBOaBsTHn9xx9QwvGdAR1eOevgUIPpsx9eH+ThAQofnXbJ0Ej3/ezh1RM2a4S26W1Nkp78O6pL4fPTa0Yb/cyja7+4oaP56aDMdMT9w0u0Un7xqg4XMOe//gtWXBr1nSV/voRq3qZUF9cwxq67ehNwqyfzmSiHW3C5J13zwAGEI2ELaLDMEcwc6BmOtZhPLeelY1iqdgwrVdhCqr9ikfJXvyZLNe88AZ3m47PIReJudryxwsvjCZxPVo/9ccQuT9rGSYfYSW/USXGHmEpaoe8Z5kidpuMCAzitoe4Hei2cPy1OWjKL/6xg3dw+vxaZOr1sEVlxwklRQTlT85uCljyMMlniZ8abxUcFUi7hQpmXQEckLhsu/RaNEJqJKWJOWDRiwSngZbCialjTo5KoiijQFosAeA1pvtLvjUwpzKnM2syj7O029by34+flH5u+mg43mneNuQHLlpAWtlRXvGr6y14oH14Ob46w+qgc2w+CmhFZJPSVg3h6cJtNb0tIxpAzsoTIoJqLQNR6UKw=
+
+after_success:
+- bash <(curl -s https://codecov.io/bash)
+- "[[ $TRAVIS_BRANCH == 'master' && $TRAVIS_PULL_REQUEST == 'false' ]] && mvn deploy -DskipTests --settings settings.xml"
