@@ -37,7 +37,7 @@ public class CouchDBSourceTaskIT {
 
   @Before
   public void init() {
-    mockCouchDBServer = new MockCouchDBServer("127.0.0.1", 5984);
+    mockCouchDBServer = new MockCouchDBServer();
     mockCouchDBServer.start();
 
     Map<String, String> config = TestUtils.createConfigMap();

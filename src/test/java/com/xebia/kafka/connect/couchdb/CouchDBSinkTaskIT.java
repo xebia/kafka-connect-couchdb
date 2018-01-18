@@ -40,7 +40,7 @@ public class CouchDBSinkTaskIT {
 
   @Before
   public void init() {
-    mockCouchDBServer = new MockCouchDBServer("127.0.0.1", 5984);
+    mockCouchDBServer = new MockCouchDBServer();
     postData = mockCouchDBServer.start();
 
     records = new ArrayList<>();

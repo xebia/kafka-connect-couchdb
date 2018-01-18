@@ -34,12 +34,12 @@ class MockCouchDBServer {
   private boolean insertShouldSucceed;
   private HttpServer server;
 
-  MockCouchDBServer(String host, int port) {
+  MockCouchDBServer() {
     this.insertShouldSucceed = true;
 
     HttpServerOptions httpServerOptions = new HttpServerOptions()
-      .setHost(host)
-      .setPort(port);
+      .setHost("0.0.0.0")
+      .setPort(5984);
 
     this.server = Vertx.vertx().createHttpServer(httpServerOptions);
   }
