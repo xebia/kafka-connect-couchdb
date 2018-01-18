@@ -110,6 +110,16 @@ class CouchDBConnectorConfig extends AbstractConfig {
       "be used as the ID. The ID is used to identify a unique document within CouchDB." +
       "The key/value pairs should follow the following syntax: {topic}/{database}";
 
+  private static final String DATABASES_TO_CHANGES_SINCE_MAPPING_CONFIG =
+    "databases-to-changes-since-mapping";
+  private static final String DATABASES_TO_CHANGES_SINCE_MAPPING_DISPLAY =
+    "CouchDB database -> changes since setting";
+  private static final String DATABASES_TO_CHANGES_SINCE_MAPPING_DOC =
+    "A comma separated list of key/value pairs specifying which changes should be published per database. " +
+      "'0' specifies all changes since the beginning of time. " +
+      "'now' specifies all changes after the connector starts listening. " +
+      "A specific update sequence ID specifies changes since that update.";
+
   private static final String CONVERTER_CONFIG = "converter";
   private static final String CONVERTER_DISPLAY = "The converter class to use";
   private static final String CONVERTER_DOC =
@@ -232,21 +242,29 @@ class CouchDBConnectorConfig extends AbstractConfig {
         ConfigDef.Width.LONG,
         TOPICS_TO_ID_FIELDS_MAPPING_DISPLAY)
 
+      .define(DATABASES_TO_CHANGES_SINCE_MAPPING_CONFIG,
+        ConfigDef.Type.STRING,
+        ConfigDef.Importance.HIGH,
+        DATABASES_TO_CHANGES_SINCE_MAPPING_DOC,
+        CONNECTOR_GROUP, 4,
+        ConfigDef.Width.LONG,
+        DATABASES_TO_CHANGES_SINCE_MAPPING_DISPLAY)
+
       .define(CONVERTER_CONFIG,
         ConfigDef.Type.STRING,
         CONVERTER_DEFAULT,
-        ConfigDef.Importance.HIGH,
+        ConfigDef.Importance.MEDIUM,
         CONVERTER_DOC,
-        CONNECTOR_GROUP, 4,
+        CONNECTOR_GROUP, 5,
         ConfigDef.Width.LONG,
         CONVERTER_DISPLAY)
 
       .define(MERGER_CONFIG,
         ConfigDef.Type.STRING,
         MERGER_DEFAULT,
-        ConfigDef.Importance.HIGH,
+        ConfigDef.Importance.MEDIUM,
         MERGER_DOC,
-        CONNECTOR_GROUP, 5,
+        CONNECTOR_GROUP, 6,
         ConfigDef.Width.LONG,
         MERGER_DISPLAY)
 
@@ -255,7 +273,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
         MAX_CONFLICTING_DOCS_FETCH_RETRIES_DEFAULT,
         ConfigDef.Importance.MEDIUM,
         MAX_CONFLICTING_DOCS_FETCH_RETRIES_DOC,
-        CONNECTOR_GROUP, 6,
+        CONNECTOR_GROUP, 7,
         ConfigDef.Width.LONG,
         MAX_CONFLICTING_DOCS_FETCH_RETRIES_DISPLAY)
 
@@ -264,7 +282,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
         SOURCE_MAX_BATCH_SIZE_DEFAULT,
         ConfigDef.Importance.MEDIUM,
         SOURCE_MAX_BATCH_SIZE_DOC,
-        CONNECTOR_GROUP, 7,
+        CONNECTOR_GROUP, 8,
         ConfigDef.Width.LONG,
         SOURCE_MAX_BATCH_SIZE_DISPLAY);
   }
@@ -329,6 +347,10 @@ class CouchDBConnectorConfig extends AbstractConfig {
     }
 
     return topicsToIdFieldsMapping;
+  }
+
+  Map<String, String> getDatabasesToChangesSinceMapping() {
+    return getMapping(getString(DATABASES_TO_CHANGES_SINCE_MAPPING_CONFIG));
   }
 
   HttpClientOptions getHttpClientOptions() {

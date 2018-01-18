@@ -77,6 +77,7 @@ public class CouchDBSourceTask extends SourceTask {
 
   private String auth;
   private Map<String, String> databasesMapping;
+  private Map<String, String> changesSinceMapping;
   private Converter converter;
   private int maxBatchSize;
 
@@ -119,7 +120,7 @@ public class CouchDBSourceTask extends SourceTask {
     String[] parts = concat.split("\n");
     if (parts.length > 1 && !parts[0].isEmpty()) {
       String obj = parts[0];
-      JsonObject jObj =  Json.mapper.convertValue(obj, JsonObject.class);
+      JsonObject jObj = Json.mapper.convertValue(obj, JsonObject.class);
       return new Acc(concat.replace(obj + "\n", ""), jObj);
     } else {
       return new Acc(concat);
@@ -143,23 +144,35 @@ public class CouchDBSourceTask extends SourceTask {
   private void initChangesFeeds() {
     Observable
       .from(databasesMapping.entrySet())
-      .flatMap(entry -> get("/" + entry.getValue() + "/_changes?feed=continuous&include_docs=true&since=now")
-        .retry()
-        .flatMap(HttpClientResponse::toObservable)
-        .map(Buffer::toString)
-        .scan(new Acc(), this::accumulateJsonObjects)
-        .filter(Acc::hasObject)
-        .map(Acc::getObj)
-        .filter(change -> !change.getString("id").startsWith("_design"))
-        .map(change -> {
-          String seq = change.getString("seq");
-          JsonObject doc = change.getJsonObject("doc");
-          return records.offer(createRecord(entry.getValue(), seq, entry.getKey(), doc));
-        })
-        .doOnError(e -> LOG.error(
-          "Error while listening to changes from '" + entry.getValue() + "' database", e
-        ))
-      )
+      .flatMap(entry -> {
+        String topic = entry.getKey();
+        String dbName = entry.getValue();
+
+        String changesSince = "0";
+        try {
+          changesSince = changesSinceMapping.get(dbName);
+        } catch (NullPointerException ignore) {
+          LOG.warn(
+            "No 'changes since' configuration found for database '" + dbName + "'. " +
+              "Using default: " + changesSince
+          );
+        }
+
+        return get("/" + dbName + "/_changes?feed=continuous&include_docs=true&since=" + changesSince)
+          .retry()
+          .flatMap(HttpClientResponse::toObservable)
+          .map(Buffer::toString)
+          .scan(new Acc(), this::accumulateJsonObjects)
+          .filter(Acc::hasObject)
+          .map(Acc::getObj)
+          .filter(change -> !change.getString("id").startsWith("_design"))
+          .map(change -> {
+            String seq = change.getString("seq");
+            JsonObject doc = change.getJsonObject("doc");
+            return records.offer(createRecord(dbName, seq, topic, doc));
+          })
+          .doOnError(e -> LOG.error("Error while listening to changes from '" + dbName + "' database", e));
+      })
       .toCompletable()
       .await();
   }
@@ -177,6 +190,7 @@ public class CouchDBSourceTask extends SourceTask {
     converter = config.getConverter();
     converter.configure(Collections.singletonMap("schemas.enable", false), false);
     maxBatchSize = config.getInt(SOURCE_MAX_BATCH_SIZE_CONFIG);
+    changesSinceMapping = config.getDatabasesToChangesSinceMapping();
 
     httpClient = Vertx.vertx().createHttpClient(config.getHttpClientOptions());
 

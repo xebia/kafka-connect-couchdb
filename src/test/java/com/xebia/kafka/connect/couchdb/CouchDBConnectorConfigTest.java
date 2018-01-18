@@ -125,6 +125,20 @@ public class CouchDBConnectorConfigTest {
   }
 
   @Test
+  public void getDatabasesToChangesSinceMappingTest() {
+    Map<String, String> mapping = config.getDatabasesToChangesSinceMapping();
+
+    assertEquals(
+      1, mapping.size(),
+      "1 map entry should have been created"
+    );
+    assertEquals(
+      "0", mapping.get("couchdb-example"),
+      "have correct value for first entry"
+    );
+  }
+
+  @Test
   public void getHttpClientOptionsTest() {
     HttpClientOptions httpClientOptions = config.getHttpClientOptions();
 
