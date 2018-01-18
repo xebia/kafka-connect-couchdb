@@ -116,7 +116,7 @@ class MockCouchDBServer {
       }
     });
 
-    server.listen();
+    server.rxListen().toCompletable().await();
 
     return postData;
   }
