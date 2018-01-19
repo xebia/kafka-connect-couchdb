@@ -1,25 +1,14 @@
 language: java
-
 sudo: false
-
 jdk: oraclejdk8
-
-script: mvn clean verify
-
 cache:
   directories:
   - "$HOME/.m2"
-
-before_install:
-- if [ ! -z "$GPG_SECRET_KEYS" ]; then echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import; fi
-- if [ ! -z "$GPG_OWNERTRUST" ]; then echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust; fi
-
-after_success:
-- bash <(curl -s https://codecov.io/bash)
-- openssl aes-256-cbc -pass pass:$ENCRYPTION_PASSWORD -in $GPG_DIR/pubring.gpg.enc -out $GPG_DIR/pubring.gpg -d
-- openssl aes-256-cbc -pass pass:$ENCRYPTION_PASSWORD -in $GPG_DIR/secring.gpg.enc -out $GPG_DIR/secring.gpg -d
-- "$GPG_DIR/deploy.sh"
-
 env:
   global:
-  - GPG_DIR="`pwd`/deploy"
+  - DEPLOY_DIR="`pwd`/deploy"
+script: mvn clean verify
+after_success:
+- bash <(curl -s https://codecov.io/bash)
+- "$DEPLOY_DIR/before-deploy.sh"
+- "$DEPLOY_DIR/deploy.sh"
