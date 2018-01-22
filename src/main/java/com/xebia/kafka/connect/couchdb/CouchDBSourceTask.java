@@ -47,7 +47,7 @@ import static com.xebia.kafka.connect.couchdb.CouchDBConnectorConfig.Constants.A
 import static com.xebia.kafka.connect.couchdb.CouchDBConnectorConfig.SOURCE_MAX_BATCH_SIZE_CONFIG;
 
 public class CouchDBSourceTask extends SourceTask {
-  private class Acc {
+  static class Acc {
     String str;
     JsonObject obj;
 
@@ -84,12 +84,12 @@ public class CouchDBSourceTask extends SourceTask {
   private HttpClient httpClient;
   private BlockingQueue<SourceRecord> records;
 
-  private SourceRecord createRecord(String dbName, String seq, String topic, JsonObject doc) {
-    Map<String, String> partition = new HashMap<>();
-    partition.put("database", dbName);
+  SourceRecord createRecord(String dbName, String seq, String topic, JsonObject doc, Converter converter) {
+    Map<String, String> sourcePartition = new HashMap<>();
+    sourcePartition.put("database", dbName);
 
-    Map<String, String> offset = new HashMap<>();
-    partition.put("seq", seq);
+    Map<String, String> sourceOffset = new HashMap<>();
+    sourceOffset.put("seq", seq);
 
     Schema keySchema = Schema.STRING_SCHEMA;
     String key = doc.getString("_id");
@@ -104,9 +104,11 @@ public class CouchDBSourceTask extends SourceTask {
 
     SchemaAndValue schemaAndValue = converter.toConnectData(topic, docBytes);
 
+    System.out.println(schemaAndValue);
+
     return new SourceRecord(
-      partition,
-      offset,
+      sourcePartition,
+      sourceOffset,
       topic,
       keySchema,
       key,
@@ -115,7 +117,7 @@ public class CouchDBSourceTask extends SourceTask {
     );
   }
 
-  private Acc accumulateJsonObjects(Acc acc, String chunk) {
+  Acc accumulateJsonObjects(Acc acc, String chunk) {
     String concat = acc.str + chunk;
     String[] parts = concat.split("\n");
     if (parts.length > 1 && !parts[0].isEmpty()) {
@@ -139,6 +141,10 @@ public class CouchDBSourceTask extends SourceTask {
       req.end();
 
     }, Emitter.BackpressureMode.BUFFER);
+  }
+
+  boolean isNotDesignDocument(JsonObject doc) {
+    return !doc.getString("id").startsWith("_design");
   }
 
   private void initChangesFeeds() {
@@ -165,11 +171,11 @@ public class CouchDBSourceTask extends SourceTask {
           .scan(new Acc(), this::accumulateJsonObjects)
           .filter(Acc::hasObject)
           .map(Acc::getObj)
-          .filter(change -> !change.getString("id").startsWith("_design"))
+          .filter(this::isNotDesignDocument)
           .map(change -> {
             String seq = change.getString("seq");
             JsonObject doc = change.getJsonObject("doc");
-            return records.offer(createRecord(dbName, seq, topic, doc));
+            return records.offer(createRecord(dbName, seq, topic, doc, converter));
           })
           .doOnError(e -> LOG.error("Error while listening to changes from '" + dbName + "' database", e));
       })
