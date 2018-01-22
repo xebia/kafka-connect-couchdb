@@ -141,6 +141,10 @@ public class CouchDBSourceTask extends SourceTask {
     }, Emitter.BackpressureMode.BUFFER);
   }
 
+  boolean isNotDesignDocument(JsonObject doc) {
+    return !doc.getString("id").startsWith("_design");
+  }
+
   private void initChangesFeeds() {
     Observable
       .from(databasesMapping.entrySet())
@@ -165,7 +169,7 @@ public class CouchDBSourceTask extends SourceTask {
           .scan(new Acc(), this::accumulateJsonObjects)
           .filter(Acc::hasObject)
           .map(Acc::getObj)
-          .filter(change -> !change.getString("id").startsWith("_design"))
+          .filter(this::isNotDesignDocument)
           .map(change -> {
             String seq = change.getString("seq");
             JsonObject doc = change.getJsonObject("doc");
