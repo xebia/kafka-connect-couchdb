@@ -173,6 +173,7 @@
                         <include>**/*Tests.java</include>
                         <include>**/*TestCase.java</include>
                     </includes>
+                    <trimStackTrace>false</trimStackTrace>
                 </configuration>
                 <dependencies>
                     <dependency>
@@ -188,6 +189,7 @@
                 <version>2.19.1</version>
                 <configuration>
                     <argLine>${failsafeArgLine}</argLine>
+                    <trimStackTrace>false</trimStackTrace>
                 </configuration>
                 <executions>
                     <execution>

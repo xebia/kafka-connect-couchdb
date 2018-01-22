@@ -112,6 +112,24 @@ public class CouchDBSourceTaskTest {
       "{\"incomplete\":\"object\",\"remains\":\"ofObject\"}", acc2.getObj().encode(),
       "should contain JSON object after being given the remainder of a JSON object as String"
     );
+
+    CouchDBSourceTask.Acc acc3 = sourceTask
+      .accumulateJsonObjects(acc2, "}");
+    CouchDBSourceTask.Acc acc4 = sourceTask
+      .accumulateJsonObjects(acc3, "\n");
+
+    assertTrue(
+      acc4.hasObject(),
+      "should return true for hasObject after only end of line character is given"
+    );
+    assertEquals(
+      "", acc4.str,
+      "should contain empty String after only end of line character is given"
+    );
+    assertEquals(
+      "{\"next\":\"object\"}", acc4.getObj().encode(),
+      "should contain JSON object after only end of line character is given"
+    );
   }
 
   @Test
