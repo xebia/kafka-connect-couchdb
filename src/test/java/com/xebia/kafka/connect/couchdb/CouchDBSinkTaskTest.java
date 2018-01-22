@@ -57,7 +57,14 @@ public class CouchDBSinkTaskTest {
     when(mockResponse.body()).thenReturn(Buffer.buffer("Filled body"));
     assertThrows(
       RuntimeException.class, () -> sinkTask.validateResponse(mockResponse, 409),
-      "should throw error when response has error status and filled body"
+      "should throw error when response has error status and filled body [1]"
+    );
+
+    when(mockResponse.statusCode()).thenReturn(100);
+    when(mockResponse.body()).thenReturn(Buffer.buffer("Filled body"));
+    assertThrows(
+      RuntimeException.class, () -> sinkTask.validateResponse(mockResponse, 409),
+      "should throw error when response has error status and filled body [2]"
     );
 
     when(mockResponse.statusCode()).thenReturn(200);
