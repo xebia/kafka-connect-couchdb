@@ -16,6 +16,7 @@
 
 package com.xebia.kafka.connect.couchdb;
 
+import io.vertx.core.json.JsonObject;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.json.JsonConverter;
 import org.apache.kafka.connect.source.SourceRecord;
@@ -110,6 +111,44 @@ public class CouchDBSourceTaskTest {
     assertEquals(
       "{\"incomplete\":\"object\",\"remains\":\"ofObject\"}", acc2.getObj().encode(),
       "should contain JSON object after being given the remainder of a JSON object as String"
+    );
+
+    CouchDBSourceTask.Acc acc3 = sourceTask
+      .accumulateJsonObjects(acc2, "}");
+    CouchDBSourceTask.Acc acc4 = sourceTask
+      .accumulateJsonObjects(acc3, "\n");
+
+    assertTrue(
+      acc4.hasObject(),
+      "should return true for hasObject after only end of line character is given"
+    );
+    assertEquals(
+      "", acc4.str,
+      "should contain empty String after only end of line character is given"
+    );
+    assertEquals(
+      "{\"next\":\"object\"}", acc4.getObj().encode(),
+      "should contain JSON object after only end of line character is given"
+    );
+  }
+
+  @Test
+  public void isNotDesignDocumentTest() {
+    CouchDBSourceTask sourceTask = new CouchDBSourceTask();
+
+    JsonObject designDoc = new JsonObject();
+    designDoc.put("id", "_design/some-design-doc-id");
+
+    JsonObject nonDesignDoc = new JsonObject();
+    nonDesignDoc.put("id", "some-non-design-doc-id");
+
+    assertFalse(
+      sourceTask.isNotDesignDocument(designDoc),
+      "should return false when a document is a design document"
+    );
+    assertTrue(
+      sourceTask.isNotDesignDocument(nonDesignDoc),
+      "should return true when a document is not a design document"
     );
   }
 }

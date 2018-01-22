@@ -258,6 +258,12 @@ public class CouchDBConnectorConfigTest {
       config.getConverter() instanceof JsonConverter,
       "a JsonConverter instance should be created"
     );
+
+    CouchDBConnectorConfig incorrectConfig = TestUtils.createConfig("converter=some.non.existing.Class");
+    assertThrows(
+      ConfigException.class, incorrectConfig::getConverter,
+      "should throw a configuration exception when converter class given cannot be instantiated"
+    );
   }
 
   @Test
@@ -265,6 +271,12 @@ public class CouchDBConnectorConfigTest {
     assertTrue(
       config.getMerger() instanceof LatestWinsMerger,
       "a LatestWinsMerger instance should be created"
+    );
+
+    CouchDBConnectorConfig incorrectConfig = TestUtils.createConfig("merger=some.non.existing.Class");
+    assertThrows(
+      ConfigException.class, incorrectConfig::getMerger,
+      "should throw a configuration exception when merger class given cannot be instantiated"
     );
   }
 }

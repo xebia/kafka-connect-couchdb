@@ -94,17 +94,8 @@ public class CouchDBSourceTask extends SourceTask {
     Schema keySchema = Schema.STRING_SCHEMA;
     String key = doc.getString("_id");
 
-    byte[] docBytes;
-    try {
-      docBytes = Json.mapper.writeValueAsBytes(doc);
-    } catch (JsonProcessingException e) {
-      LOG.error("Could not get bytes from JSON value {} from database {}", doc.encodePrettily(), dbName);
-      throw new RuntimeException("Could not get bytes from JSON value");
-    }
-
+    byte[] docBytes = doc.encode().getBytes();
     SchemaAndValue schemaAndValue = converter.toConnectData(topic, docBytes);
-
-    System.out.println(schemaAndValue);
 
     return new SourceRecord(
       sourcePartition,
@@ -119,14 +110,18 @@ public class CouchDBSourceTask extends SourceTask {
 
   Acc accumulateJsonObjects(Acc acc, String chunk) {
     String concat = acc.str + chunk;
-    String[] parts = concat.split("\n");
-    if (parts.length > 1 && !parts[0].isEmpty()) {
-      String obj = parts[0];
-      JsonObject jObj = Json.mapper.convertValue(obj, JsonObject.class);
-      return new Acc(concat.replace(obj + "\n", ""), jObj);
-    } else {
-      return new Acc(concat);
+
+    if (concat.contains("\n")) {
+      String[] parts = concat.split("\n");
+      JsonObject jObj = Json.mapper.convertValue(parts[0], JsonObject.class);
+
+      if (parts.length > 1) {
+        return new Acc(parts[1], jObj);
+      }
+      return new Acc("", jObj);
     }
+
+    return new Acc(concat);
   }
 
   private Observable<HttpClientResponse> get(String requestURI) {
