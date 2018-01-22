@@ -261,7 +261,7 @@ public class CouchDBConnectorConfigTest {
 
     CouchDBConnectorConfig incorrectConfig = TestUtils.createConfig("converter=some.non.existing.Class");
     assertThrows(
-      ConfigException.class, () -> incorrectConfig.getConverter(),
+      ConfigException.class, incorrectConfig::getConverter,
       "should throw a configuration exception when converter class given cannot be instantiated"
     );
   }
@@ -275,7 +275,7 @@ public class CouchDBConnectorConfigTest {
 
     CouchDBConnectorConfig incorrectConfig = TestUtils.createConfig("merger=some.non.existing.Class");
     assertThrows(
-      ConfigException.class, () -> incorrectConfig.getMerger(),
+      ConfigException.class, incorrectConfig::getMerger,
       "should throw a configuration exception when merger class given cannot be instantiated"
     );
   }
