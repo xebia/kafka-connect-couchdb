@@ -94,14 +94,7 @@ public class CouchDBSourceTask extends SourceTask {
     Schema keySchema = Schema.STRING_SCHEMA;
     String key = doc.getString("_id");
 
-    byte[] docBytes;
-    try {
-      docBytes = Json.mapper.writeValueAsBytes(doc);
-    } catch (JsonProcessingException e) {
-      LOG.error("Could not get bytes from JSON value {} from database {}", doc.encodePrettily(), dbName);
-      throw new RuntimeException("Could not get bytes from JSON value");
-    }
-
+    byte[] docBytes = doc.encode().getBytes();
     SchemaAndValue schemaAndValue = converter.toConnectData(topic, docBytes);
 
     return new SourceRecord(
