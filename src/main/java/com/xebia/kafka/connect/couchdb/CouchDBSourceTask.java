@@ -104,8 +104,6 @@ public class CouchDBSourceTask extends SourceTask {
 
     SchemaAndValue schemaAndValue = converter.toConnectData(topic, docBytes);
 
-    System.out.println(schemaAndValue);
-
     return new SourceRecord(
       sourcePartition,
       sourceOffset,
