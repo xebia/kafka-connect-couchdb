@@ -78,7 +78,7 @@ public class CouchDBSinkTask extends SinkTask {
 
   private WebClient httpClient;
 
-  private HttpResponse<Buffer> validateResponse(HttpResponse<Buffer> response, int... acceptedStatuses) {
+  HttpResponse<Buffer> validateResponse(HttpResponse<Buffer> response, int... acceptedStatuses) {
     boolean statusNotAccepted = true;
     for (int as : acceptedStatuses) {
       if (response.statusCode() == as) {
