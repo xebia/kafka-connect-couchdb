@@ -26,7 +26,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import static com.xebia.kafka.connect.couchdb.TestUtils.TEST_LATEST_REV;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class CouchDBSourceTaskTest {
   @Test
@@ -74,6 +74,42 @@ public class CouchDBSourceTaskTest {
     assertEquals(
       TEST_LATEST_REV.getString("bar"), ((Map) record.value()).get("bar"),
       "should use given document as value (bar check)"
+    );
+  }
+
+  @Test
+  public void accumulateJsonObjectsTest() {
+    CouchDBSourceTask sourceTask = new CouchDBSourceTask();
+
+    CouchDBSourceTask.Acc acc1 = sourceTask
+      .accumulateJsonObjects(new CouchDBSourceTask.Acc(), "{\"incomplete\":\"object\"");
+    assertNull(
+      acc1.getObj(),
+      "should not contain an object after being given an incomplete JSON String"
+    );
+    assertFalse(
+      acc1.hasObject(),
+      "should return false for hasObject after being given an incomplete JSON String"
+    );
+    assertEquals(
+      "{\"incomplete\":\"object\"", acc1.str,
+      "should store the given incomplete JSON string for further processing"
+    );
+
+    CouchDBSourceTask.Acc acc2 = sourceTask
+      .accumulateJsonObjects(acc1, ",\"remains\":\"ofObject\"}\n{\"next\":\"object\"");
+
+    assertTrue(
+      acc2.hasObject(),
+      "should return true for hasObject after being given the remainder of a JSON object as String"
+    );
+    assertEquals(
+      "{\"next\":\"object\"", acc2.str,
+      "should contain next incomplete JSON object after parsing previous complete one"
+    );
+    assertEquals(
+      "{\"incomplete\":\"object\",\"remains\":\"ofObject\"}", acc2.getObj().encode(),
+      "should contain JSON object after being given the remainder of a JSON object as String"
     );
   }
 }

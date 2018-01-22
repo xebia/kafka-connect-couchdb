@@ -47,7 +47,7 @@ import static com.xebia.kafka.connect.couchdb.CouchDBConnectorConfig.Constants.A
 import static com.xebia.kafka.connect.couchdb.CouchDBConnectorConfig.SOURCE_MAX_BATCH_SIZE_CONFIG;
 
 public class CouchDBSourceTask extends SourceTask {
-  private class Acc {
+  static class Acc {
     String str;
     JsonObject obj;
 
@@ -117,7 +117,7 @@ public class CouchDBSourceTask extends SourceTask {
     );
   }
 
-  private Acc accumulateJsonObjects(Acc acc, String chunk) {
+  Acc accumulateJsonObjects(Acc acc, String chunk) {
     String concat = acc.str + chunk;
     String[] parts = concat.split("\n");
     if (parts.length > 1 && !parts[0].isEmpty()) {
