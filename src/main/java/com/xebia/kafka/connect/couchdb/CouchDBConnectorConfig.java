@@ -44,16 +44,16 @@ class CouchDBConnectorConfig extends AbstractConfig {
   private static final String DATABASE_GROUP = "Database";
   private static final String CONNECTOR_GROUP = "Connector";
 
-  private static final String COUCHDB_HOST_CONFIG = "host";
+  private static final String COUCHDB_HOST_CONFIG = "couchdb.host";
   private static final String COUCHDB_HOST_DISPLAY = "CouchDB host";
   private static final String COUCHDB_HOST_DOC = "The host name where CouchDB is reachable on.";
 
-  private static final String COUCHDB_PORT_CONFIG = "port";
+  private static final String COUCHDB_PORT_CONFIG = "couchdb.port";
   private static final String COUCHDB_PORT_DISPLAY = "CouchDB port";
   private static final String COUCHDB_PORT_DOC = "The port where CouchDB is reachable on.";
   private static final int COUCHDB_PORT_DEFAULT = 5984;
 
-  private static final String COUCHDB_SSL_CONFIG = "ssl";
+  private static final String COUCHDB_SSL_CONFIG = "couchdb.ssl";
   private static final String COUCHDB_SSL_DISPLAY = "Connect to CouchDB over SSL";
   private static final String COUCHDB_SSL_DOC =
     "Whether or not to connect to CouchDB over SSL. " +
@@ -62,27 +62,27 @@ class CouchDBConnectorConfig extends AbstractConfig {
       "and 'ssl-truststore-password' configuration items.";
   private static final boolean COUCHDB_SSL_DEFAULT = false;
 
-  private static final String SSL_TRUSTSTORE_PATH_CONFIG = "ssl-truststore-path";
+  private static final String SSL_TRUSTSTORE_PATH_CONFIG = "couchdb.ssl-truststore-path";
   private static final String SSL_TRUSTSTORE_PATH_DISPLAY = "Path to the trust store file to use.";
   private static final String SSL_TRUSTSTORE_PATH_DOC =
     "The trust store should be a file reachable by the application. It should be loaded with the SSL " +
       "certificate in use by CouchDB to encrypt traffic over HTTPS connections.";
   private static final String SSL_TRUSTSTORE_PATH_DEFAULT = "";
 
-  private static final String SSL_TRUSTSTORE_PASSWORD_CONFIG = "ssl-truststore-password";
+  private static final String SSL_TRUSTSTORE_PASSWORD_CONFIG = "couchdb.ssl-truststore-password";
   private static final String SSL_TRUSTSTORE_PASSWORD_DISPLAY = "Password for the trust store file to use";
   private static final String SSL_TRUSTSTORE_PASSWORD_DOC =
     "If the trust store provided in 'ssl-truststore-path' is password protected, " +
       "you'll need to provide that password here.";
   private static final String SSL_TRUSTSTORE_PASSWORD_DEFAULT = "";
 
-  private static final String COUCHDB_USERNAME_CONFIG = "username";
+  private static final String COUCHDB_USERNAME_CONFIG = "couchdb.username";
   private static final String COUCHDB_USERNAME_DISPLAY = "CouchDB username";
   private static final String COUCHDB_USERNAME_DOC =
     "The username used for authenticating with CouchDB. Leave empty for public databases";
   private static final String COUCHDB_USERNAME_DEFAULT = "";
 
-  private static final String COUCHDB_PASSWORD_CONFIG = "password";
+  private static final String COUCHDB_PASSWORD_CONFIG = "couchdb.password";
   private static final String COUCHDB_PASSWORD_DISPLAY = "CouchDB password";
   private static final String COUCHDB_PASSWORD_DOC =
     "The password used for authenticating with CouchDB. Leave empty for public databases";
@@ -94,7 +94,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
     "A comma separated list of Kafka topics that are relevant to this connector.";
 
   private static final String SINK_TOPICS_TO_DATABASES_MAPPING_CONFIG =
-    "sink-topics-to-databases-mapping";
+    "couchdb.sink-topics-to-databases-mapping";
   private static final String SINK_TOPICS_TO_DATABASES_MAPPING_DISPLAY = 
     "Kafka topic -> CouchDB database mapping for sink";
   private static final String SINK_TOPICS_TO_DATABASES_MAPPING_DOC =
@@ -103,7 +103,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
       "The key/value pairs should follow the following syntax: {topic}/{database}";
 
   private static final String SOURCE_TOPICS_TO_DATABASES_MAPPING_CONFIG =
-    "source-topics-to-databases-mapping";
+    "couchdb.source-topics-to-databases-mapping";
   private static final String SOURCE_TOPICS_TO_DATABASES_MAPPING_DISPLAY =
     "Kafka topic -> CouchDB database mapping for source";
   private static final String SOURCE_TOPICS_TO_DATABASES_MAPPING_DOC =
@@ -111,7 +111,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
       "for their changes and to which Kafka topic those changes should be published. " +
       "The key/value pairs should follow the following syntax: {topic}/{database}";
 
-  private static final String TOPICS_TO_ID_FIELDS_MAPPING_CONFIG = "topics-to-id-fields-mapping";
+  private static final String TOPICS_TO_ID_FIELDS_MAPPING_CONFIG = "couchdb.topics-to-id-fields-mapping";
   private static final String TOPICS_TO_ID_FIELDS_MAPPING_DISPLAY = "Kafka topic -> JSON id field name";
   private static final String TOPICS_TO_ID_FIELDS_MAPPING_DOC =
     "A comma separated list of key/value pairs specifying which field from a Kafka record's value should " +
@@ -119,7 +119,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
       "The key/value pairs should follow the following syntax: {topic}/{database}";
 
   private static final String DATABASES_TO_CHANGES_SINCE_MAPPING_CONFIG =
-    "databases-to-changes-since-mapping";
+    "couchdb.databases-to-changes-since-mapping";
   private static final String DATABASES_TO_CHANGES_SINCE_MAPPING_DISPLAY =
     "CouchDB database -> changes since setting";
   private static final String DATABASES_TO_CHANGES_SINCE_MAPPING_DOC =
@@ -128,14 +128,14 @@ class CouchDBConnectorConfig extends AbstractConfig {
       "'now' specifies all changes after the connector starts listening. " +
       "A specific update sequence ID specifies changes since that update.";
 
-  private static final String CONVERTER_CONFIG = "converter";
+  private static final String CONVERTER_CONFIG = "couchdb.converter";
   private static final String CONVERTER_DISPLAY = "The converter class to use";
   private static final String CONVERTER_DOC =
     "A class implementing com.xebia.kafka.connect.couchdb.parsing.Converter. " +
       "This will be used to parse from a Kafka record to JSON and vice versa.";
   private static final String CONVERTER_DEFAULT = "com.xebia.kafka.connect.couchdb.converting.JSONConverter";
 
-  private static final String MERGER_CONFIG = "merger";
+  private static final String MERGER_CONFIG = "couchdb.merger";
   private static final String MERGER_DISPLAY = "The merger class to use";
   private static final String MERGER_DOC =
     "A class implementing com.xebia.kafka.connect.couchdb.merging.Merger. " +
@@ -143,7 +143,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
   private static final String MERGER_DEFAULT = "com.xebia.kafka.connect.couchdb.merging.LatestWinsMerger";
 
   static final String MAX_CONFLICTING_DOCS_FETCH_RETRIES_CONFIG =
-    "max-conflicting-docs-fetch-retries";
+    "couchdb.max-conflicting-docs-fetch-retries";
   private static final String MAX_CONFLICTING_DOCS_FETCH_RETRIES_DISPLAY =
     "Maximum number of conflicting docs fetch retries";
   private static final String MAX_CONFLICTING_DOCS_FETCH_RETRIES_DOC =
@@ -152,7 +152,7 @@ class CouchDBConnectorConfig extends AbstractConfig {
       "parallel";
   private static final int MAX_CONFLICTING_DOCS_FETCH_RETRIES_DEFAULT = 5;
 
-  static final String SOURCE_MAX_BATCH_SIZE_CONFIG = "max-source-batch-size";
+  static final String SOURCE_MAX_BATCH_SIZE_CONFIG = "couchdb.max-source-batch-size";
   private static final String SOURCE_MAX_BATCH_SIZE_DISPLAY = "Maximum source batch size";
   private static final String SOURCE_MAX_BATCH_SIZE_DOC =
     "When the source connector is polled by Kafka the in-memory queue with CouchDB documents will be " +
@@ -415,14 +415,14 @@ class CouchDBConnectorConfig extends AbstractConfig {
 
   HttpClientOptions getHttpClientOptions() {
     HttpClientOptions options = new HttpClientOptions();
-    options.setDefaultHost(getString("host"));
-    options.setDefaultPort(getInt("port"));
+    options.setDefaultHost(getString(COUCHDB_HOST_CONFIG));
+    options.setDefaultPort(getInt(COUCHDB_PORT_CONFIG));
 
-    if (getBoolean("ssl")) {
+    if (getBoolean(COUCHDB_SSL_CONFIG)) {
       options.setSsl(true);
       options.setTrustStoreOptions(new JksOptions()
-        .setPath(getString("ssl-truststore-path"))
-        .setPassword(getString("ssl-truststore-password"))
+        .setPath(getString(SSL_TRUSTSTORE_PATH_CONFIG))
+        .setPassword(getString(SSL_TRUSTSTORE_PASSWORD_CONFIG))
       );
     }
 
@@ -430,8 +430,8 @@ class CouchDBConnectorConfig extends AbstractConfig {
   }
 
   String getBasicAuth() {
-    String username = getString("username");
-    String password = getString("password");
+    String username = getString(COUCHDB_USERNAME_CONFIG);
+    String password = getString(COUCHDB_PASSWORD_CONFIG);
 
     String auth;
     if (username.isEmpty() || password.isEmpty()) {
@@ -466,10 +466,10 @@ class CouchDBConnectorConfig extends AbstractConfig {
   }
 
   Converter getConverter() {
-    return getInstance(getString("converter"), Converter.class);
+    return getInstance(getString(CONVERTER_CONFIG), Converter.class);
   }
 
   Merger getMerger() {
-    return getInstance(getString("merger"), Merger.class);
+    return getInstance(getString(MERGER_CONFIG), Merger.class);
   }
 }

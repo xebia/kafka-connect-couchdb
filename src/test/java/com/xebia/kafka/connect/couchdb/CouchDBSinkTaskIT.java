@@ -56,8 +56,8 @@ public class CouchDBSinkTaskIT {
 
     Map<String, String> config = TestUtils.createConfigMap();
     config.put("topics", "MyTopic");
-    config.put("sink-topics-to-databases-mapping", "MyTopic/MyDatabase");
-    config.put("topics-to-id-fields-mapping", "MyTopic/_id");
+    config.put("couchdb.sink-topics-to-databases-mapping", "MyTopic/MyDatabase");
+    config.put("couchdb.topics-to-id-fields-mapping", "MyTopic/_id");
     sinkTask = new CouchDBSinkTask();
     sinkTask.start(config);
   }

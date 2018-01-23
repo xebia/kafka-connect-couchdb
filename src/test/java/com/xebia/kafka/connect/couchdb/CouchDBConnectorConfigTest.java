@@ -42,7 +42,7 @@ public class CouchDBConnectorConfigTest {
       "produced task configs have same size as max tasks"
     );
     assertTrue(
-      taskConfigs.stream().allMatch(map -> map.get("host").equals("127.0.0.1")),
+      taskConfigs.stream().allMatch(map -> map.get("couchdb.host").equals("127.0.0.1")),
       "produced task configs all contain given config entries"
     );
   }
@@ -166,7 +166,7 @@ public class CouchDBConnectorConfigTest {
     );
 
     CouchDBConnectorConfig incorrectConfig = TestUtils.createConfig(
-      "sink-topics-to-databases-mapping=MyTopic/MyDatabase,MyOtherTopic/MyOtherDatabase",
+      "couchdb.sink-topics-to-databases-mapping=MyTopic/MyDatabase,MyOtherTopic/MyOtherDatabase",
       "topics-to-id-fields-mapping=MyOtherTopic/MyOtherIdField"
     );
 
@@ -208,9 +208,9 @@ public class CouchDBConnectorConfigTest {
     );
 
     CouchDBConnectorConfig config = TestUtils.createConfig(
-      "ssl=true",
-      "ssl-truststore-path=foo.bar.baz",
-      "ssl-truststore-password=MySuperSecretPassword"
+      "couchdb.ssl=true",
+      "couchdb.ssl-truststore-path=foo.bar.baz",
+      "couchdb.ssl-truststore-password=MySuperSecretPassword"
     );
 
     httpClientOptions = config.getHttpClientOptions();
@@ -239,8 +239,8 @@ public class CouchDBConnectorConfigTest {
     );
 
     CouchDBConnectorConfig config = TestUtils.createConfig(
-      "username=foo",
-      "password=bar"
+      "couchdb.username=foo",
+      "couchdb.password=bar"
     );
 
     auth = config.getBasicAuth();
@@ -259,7 +259,9 @@ public class CouchDBConnectorConfigTest {
       "a JsonConverter instance should be created"
     );
 
-    CouchDBConnectorConfig incorrectConfig = TestUtils.createConfig("converter=some.non.existing.Class");
+    CouchDBConnectorConfig incorrectConfig = TestUtils.createConfig(
+      "couchdb.converter=some.non.existing.Class"
+    );
     assertThrows(
       ConfigException.class, incorrectConfig::getConverter,
       "should throw a configuration exception when converter class given cannot be instantiated"
@@ -273,7 +275,9 @@ public class CouchDBConnectorConfigTest {
       "a LatestWinsMerger instance should be created"
     );
 
-    CouchDBConnectorConfig incorrectConfig = TestUtils.createConfig("merger=some.non.existing.Class");
+    CouchDBConnectorConfig incorrectConfig = TestUtils.createConfig(
+      "couchdb.merger=some.non.existing.Class"
+    );
     assertThrows(
       ConfigException.class, incorrectConfig::getMerger,
       "should throw a configuration exception when merger class given cannot be instantiated"

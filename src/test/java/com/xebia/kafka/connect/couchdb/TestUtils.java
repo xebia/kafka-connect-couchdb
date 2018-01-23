@@ -43,7 +43,7 @@ public class TestUtils {
     JsonObject.class
   );
 
-  public static Map<String, String> createConfigMap(String ...configEntries) {
+  static Map<String, String> createConfigMap(String ...configEntries) {
     Properties props = new Properties();
     try {
       props.load(TestUtils.class.getClassLoader().getResourceAsStream("couchdb-sink.properties"));
@@ -67,7 +67,7 @@ public class TestUtils {
     return configMap;
   }
 
-  public static CouchDBConnectorConfig createConfig(String ...configEntries) {
+  static CouchDBConnectorConfig createConfig(String ...configEntries) {
     return new CouchDBConnectorConfig(createConfigMap(configEntries));
   }
 }
